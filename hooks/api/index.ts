@@ -1,5 +1,5 @@
 /**
- * Central TanStack React Query Hooks Layer
+ * Central TanStack React Query Hooks Layer (oms_web standard)
  * Reusable, reactive, and declarative data fetching hooks.
  */
 
@@ -13,3 +13,4 @@ export * from "./useSchedulesQuery";
 export * from "./useAssignmentsQuery";
 export * from "./useLibraryQuery";
 export * from "./useStudentsQuery";
+export * from "./useUploadMutation";

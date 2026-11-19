@@ -1,44 +1,36 @@
-import { apiClient } from "./client";
+import {
+  getProgramList,
+  getProgramDetail,
+  createProgram,
+  updateProgram,
+  deleteProgram,
+  ProgramPayload,
+  ProgramsFilterParams,
+} from "@/utils/api-requests/programs";
 import { ProgramItem } from "./types";
 
-export interface ProgramPayload {
-  title: string;
-  curriculum?: string;
-  gradeLevel?: string;
-  description?: string;
-  tuitionFee?: number;
-  currency?: string;
-  thumbnail?: string;
-  subjectsCount?: number;
-  status?: "active" | "draft" | "archived";
-}
+export type { ProgramPayload, ProgramsFilterParams };
 
 export const programsService = {
-  getAll: async (params?: { curriculum?: string; gradeLevel?: string }): Promise<ProgramItem[]> => {
-    return apiClient<ProgramItem[]>("/programs", { params });
+  getAll: async (params?: ProgramsFilterParams): Promise<ProgramItem[]> => {
+    return getProgramList(params);
   },
 
   getById: async (id: string): Promise<ProgramItem> => {
-    return apiClient<ProgramItem>(`/programs/${id}`);
+    return getProgramDetail(id);
   },
 
   create: async (payload: ProgramPayload): Promise<ProgramItem> => {
-    return apiClient<ProgramItem>("/programs", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createProgram(payload);
   },
 
   update: async (id: string, payload: Partial<ProgramPayload>): Promise<ProgramItem> => {
-    return apiClient<ProgramItem>(`/programs/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
+    return updateProgram(id, payload);
   },
 
   delete: async (id: string): Promise<{ id: string }> => {
-    return apiClient<{ id: string }>(`/programs/${id}`, {
-      method: "DELETE",
-    });
+    return deleteProgram(id);
   },
 };
+
+export const programsApi = programsService;

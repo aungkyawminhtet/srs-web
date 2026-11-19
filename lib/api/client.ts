@@ -135,54 +135,47 @@ export const getAuthToken = (): string | null => {
   return session?.token || null;
 };
 
+export const clearAuthSession = () => {
+  setStoredAuth(null);
+};
+
+import { apiRequest } from "@/utils/axios";
+
 /**
- * Universal typed API request method
+ * Universal typed API request method powered by Axios (oms_web standard)
  */
 export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { params, headers: customHeaders, ...fetchOptions } = options;
+  const { params, headers: customHeaders, method = "GET", body } = options;
 
-  let url = `${API_BASE_URL}${endpoint}`;
-  if (params) {
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([key, val]) => {
-      if (val !== undefined && val !== null) {
-        query.append(key, String(val));
+  let requestData: any = undefined;
+  if (body) {
+    if (typeof body === "string") {
+      try {
+        requestData = JSON.parse(body);
+      } catch {
+        requestData = body;
       }
-    });
-    const queryString = query.toString();
-    if (queryString) {
-      url += (url.includes("?") ? "&" : "?") + queryString;
+    } else {
+      requestData = body;
     }
-  }
-
-  const token = getAuthToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(customHeaders as Record<string, string>),
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
   }
 
   try {
-    const res = await fetch(url, {
-      ...fetchOptions,
-      headers,
+    const instance = apiRequest(null, {
+      headers: customHeaders as Record<string, string>,
     });
 
-    const isJson = res.headers.get("content-type")?.includes("application/json");
-    const json = isJson ? await res.json() : null;
+    const res = await instance.request({
+      url: endpoint,
+      method: method.toLowerCase(),
+      params,
+      data: requestData,
+    });
 
-    if (!res.ok) {
-      const errorMsg =
-        json?.msg || json?.message || `Request failed with status ${res.status}`;
-      throw new ApiError(errorMsg, res.status, json);
-    }
-
+    const json = res.data;
     // Server wraps response in { con: true, msg: "...", data: ... }
     if (json && typeof json === "object") {
       if ("data" in json) return json.data as T;
@@ -191,9 +184,12 @@ export async function apiClient<T>(
 
     return (json ?? ({} as any)) as T;
   } catch (error: any) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(error.message || "Network request failed", 500);
+    const message =
+      error.response?.data?.msg ||
+      error.response?.data?.message ||
+      error.message ||
+      "API request failed";
+    const status = error.status || error.response?.status || 500;
+    throw new ApiError(message, status, error.response?.data);
   }
 }

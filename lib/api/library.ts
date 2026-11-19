@@ -1,29 +1,42 @@
-import { apiClient } from "./client";
+import {
+  getLibraryList,
+  getLibraryDetail,
+  createLibraryItem,
+  updateLibraryItem,
+  deleteLibraryItem,
+  toggleSaveLibraryItem,
+  LibraryPayload,
+  LibraryFilterParams,
+} from "@/utils/api-requests/library";
 import { LibraryItem } from "./types";
 
-export interface LibraryPayload {
-  title: string;
-  courseTitle: string;
-  fileType: "pdf" | "document" | "image" | "video";
-  fileUrl: string;
-  fileSize?: string;
-}
+export type { LibraryPayload, LibraryFilterParams, LibraryItem };
+export type LibraryFileItem = LibraryItem;
 
 export const libraryService = {
-  getAll: async (params?: { fileType?: string; savedOnly?: boolean }): Promise<LibraryItem[]> => {
-    return apiClient<LibraryItem[]>("/library", { params });
+  getAll: async (params?: LibraryFilterParams): Promise<LibraryItem[]> => {
+    return getLibraryList(params);
   },
 
-  toggleSave: async (id: string): Promise<{ id: string; isSaved: boolean }> => {
-    return apiClient<{ id: string; isSaved: boolean }>(`/library/${id}/save`, {
-      method: "POST",
-    });
+  getById: async (id: string): Promise<LibraryItem> => {
+    return getLibraryDetail(id);
   },
 
   upload: async (payload: LibraryPayload): Promise<LibraryItem> => {
-    return apiClient<LibraryItem>("/library", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createLibraryItem(payload);
+  },
+
+  update: async (id: string, payload: Partial<LibraryPayload>): Promise<LibraryItem> => {
+    return updateLibraryItem(id, payload);
+  },
+
+  delete: async (id: string): Promise<{ id: string }> => {
+    return deleteLibraryItem(id);
+  },
+
+  toggleSave: async (id: string): Promise<{ id: string; isSaved: boolean }> => {
+    return toggleSaveLibraryItem(id);
   },
 };
+
+export const libraryApi = libraryService;

@@ -1,45 +1,45 @@
-import { apiClient } from "./client";
+import {
+  getEnrollmentList,
+  getMyEnrollments,
+  getEnrollmentDetail,
+  createEnrollment,
+  updateEnrollmentStatus,
+  deleteEnrollment,
+  CreateEnrollmentPayload,
+  EnrollmentsFilterParams,
+} from "@/utils/api-requests/enrollments";
 import { EnrollmentItem } from "./types";
 
-export interface CreateEnrollmentPayload {
-  programId: string;
-  programTitle: string;
-  paymentMethod: "KBZPay" | "CB Pay" | "AYA Pay" | "Wave Pay" | "Bank Transfer";
-  paymentDate: string;
-  amountPaid: number;
-  transactionId?: string;
-  paymentSlipUrl?: string; // base64 receipt image
-  notes?: string;
-}
+export type { CreateEnrollmentPayload, EnrollmentsFilterParams, EnrollmentItem };
 
 export const enrollmentsService = {
-  // Get current logged-in student's enrollments
   getMyEnrollments: async (): Promise<EnrollmentItem[]> => {
-    return apiClient<EnrollmentItem[]>("/enrollments/my");
+    return getMyEnrollments();
   },
 
-  // Get all enrollments for admin oversight
-  getAll: async (params?: { status?: string }): Promise<EnrollmentItem[]> => {
-    return apiClient<EnrollmentItem[]>("/enrollments", { params });
+  getAll: async (params?: EnrollmentsFilterParams): Promise<EnrollmentItem[]> => {
+    return getEnrollmentList(params);
   },
 
-  // Submit manual enrollment with payment slip
+  getById: async (id: string): Promise<EnrollmentItem> => {
+    return getEnrollmentDetail(id);
+  },
+
   create: async (payload: CreateEnrollmentPayload): Promise<EnrollmentItem> => {
-    return apiClient<EnrollmentItem>("/enrollments", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createEnrollment(payload);
   },
 
-  // Admin update enrollment status (approved, rejected, completed)
   updateStatus: async (
     id: string,
     status: "approved" | "rejected" | "completed",
     notes?: string
   ): Promise<EnrollmentItem> => {
-    return apiClient<EnrollmentItem>(`/enrollments/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status, notes }),
-    });
+    return updateEnrollmentStatus(id, status, notes);
+  },
+
+  delete: async (id: string): Promise<{ id: string }> => {
+    return deleteEnrollment(id);
   },
 };
+
+export const enrollmentsApi = enrollmentsService;

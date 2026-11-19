@@ -1,18 +1,68 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { studentsService, StudentListItem } from "@/lib/api";
+import {
+  getStudentList,
+  getStudentDetail,
+  createStudent,
+  updateStudent,
+  deleteStudent,
+  exportStudentsCsv,
+  CreateStudentPayload,
+  UpdateStudentPayload,
+  StudentsFilterParams,
+} from "@/utils/api-requests/students";
 import { queryKeys } from "./queryKeys";
 
-export function useStudentsQuery(filters?: { search?: string }) {
+export function useStudentsQuery(filters?: StudentsFilterParams) {
   return useQuery({
     queryKey: queryKeys.students.list(filters),
-    queryFn: () => studentsService.getAll(filters),
+    queryFn: () => getStudentList(filters),
+  });
+}
+
+export function useStudentDetailQuery(id: string) {
+  return useQuery({
+    queryKey: queryKeys.students.detail(id),
+    queryFn: () => getStudentDetail(id),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateStudentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateStudentPayload) => createStudent(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
+    },
+  });
+}
+
+export function useUpdateStudentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateStudentPayload }) =>
+      updateStudent(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.detail(variables.id) });
+    },
+  });
+}
+
+export function useDeleteStudentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteStudent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
+    },
   });
 }
 
 export function useExportStudentsMutation() {
   return useMutation({
     mutationFn: async () => {
-      const blob = await studentsService.exportCsv();
+      const blob = await exportStudentsCsv();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

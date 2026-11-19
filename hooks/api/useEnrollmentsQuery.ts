@@ -1,25 +1,42 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { enrollmentsService, CreateEnrollmentPayload, EnrollmentItem } from "@/lib/api";
+import {
+  getEnrollmentList,
+  getMyEnrollments,
+  getEnrollmentDetail,
+  createEnrollment,
+  updateEnrollmentStatus,
+  deleteEnrollment,
+  CreateEnrollmentPayload,
+  EnrollmentsFilterParams,
+} from "@/utils/api-requests/enrollments";
 import { queryKeys } from "./queryKeys";
 
 export function useMyEnrollmentsQuery() {
   return useQuery({
     queryKey: queryKeys.enrollments.my,
-    queryFn: () => enrollmentsService.getMyEnrollments(),
+    queryFn: () => getMyEnrollments(),
   });
 }
 
-export function useAllEnrollmentsQuery(filters?: { status?: string }) {
+export function useAllEnrollmentsQuery(filters?: EnrollmentsFilterParams) {
   return useQuery({
     queryKey: queryKeys.enrollments.list(filters),
-    queryFn: () => enrollmentsService.getAll(filters),
+    queryFn: () => getEnrollmentList(filters),
+  });
+}
+
+export function useEnrollmentDetailQuery(id: string) {
+  return useQuery({
+    queryKey: queryKeys.enrollments.detail(id),
+    queryFn: () => getEnrollmentDetail(id),
+    enabled: Boolean(id),
   });
 }
 
 export function useCreateEnrollmentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateEnrollmentPayload) => enrollmentsService.create(payload),
+    mutationFn: (payload: CreateEnrollmentPayload) => createEnrollment(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.my });
       queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.all });
@@ -38,7 +55,19 @@ export function useUpdateEnrollmentStatusMutation() {
       id: string;
       status: "approved" | "rejected" | "completed";
       notes?: string;
-    }) => enrollmentsService.updateStatus(id, status, notes),
+    }) => updateEnrollmentStatus(id, status, notes),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.my });
+      queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.detail(variables.id) });
+    },
+  });
+}
+
+export function useDeleteEnrollmentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteEnrollment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.my });

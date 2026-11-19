@@ -212,17 +212,21 @@ npm run lint
 
 ## 📐 Key Design & Architecture Principles
 
-1. **shadcn UI Components First**:
+1. **Centralized API Architecture (Axios + TanStack Query)**:
+   - **Axios HTTP Client** (`@/utils/axios`): Configured with `NEXT_PUBLIC_API_URL`, automatic Bearer token injection, and global 401 redirect handling.
+   - **Modular API Requests** (`@/utils/api-requests`): Pure, typed async CRUD functions organized by resource domain (`students`, `tutors`, `programs`, `subjects`, `schedules`, `enrollments`, `assignments`, `library`, `upload`, `auth`), following the `oms_web` standard.
+   - **TanStack Query Hooks** (`@/hooks/api`): Custom declarative hooks (`useQuery` and `useMutation`) for all CRUD actions with automatic query cache invalidation.
+2. **shadcn UI Components First**:
    Always search and utilize existing components in `@/components/ui/*` (`Table`, `Badge`, `Skeleton`, `Dialog`, `Select`). Avoid raw HTML tables or inconsistent custom buttons.
-2. **Skeleton Loading States**:
+3. **Skeleton Loading States**:
    Every async loading state uses shadcn `Skeleton` instead of generic spinners to preserve visual layout geometry during data transitions.
-3. **Database Alignment**:
+4. **Database Alignment**:
    Sample data across all dashboards is capped at **2 clean items**, exactly matching the schema of MongoDB collections in `srs-server`.
-4. **Session Token Expiry**:
+5. **Session Token Expiry**:
    User sessions enforce a strict **24-hour limit** (`24 * 60 * 60 * 1000` ms). Overdue sessions automatically expire and redirect to `/login?error=session_expired`.
-5. **Clean Local Storage**:
+6. **Clean Local Storage**:
    Only `srs_user_session` is stored for client authentication. Bulk data stores (`srs_*_store_v1`) are completely eliminated from `localStorage`.
-6. **Zero '#' Anchor Routes**:
+7. **Zero '#' Anchor Routes**:
    All detail views and modals use clean, nested Next.js App Router paths (e.g. `/instructor/courses/[id]`, `/instructor/assignments/[id]/submissions/[subId]`).
 
 ---

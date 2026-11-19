@@ -1,18 +1,34 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { tutorsService, TutorPayload, TutorItem } from "@/lib/api";
+import {
+  getTutorList,
+  getTutorDetail,
+  createTutor,
+  updateTutor,
+  deleteTutor,
+  TutorPayload,
+  TutorsFilterParams,
+} from "@/utils/api-requests/tutors";
 import { queryKeys } from "./queryKeys";
 
-export function useTutorsQuery(filters?: { specialization?: string }) {
+export function useTutorsQuery(filters?: TutorsFilterParams) {
   return useQuery({
     queryKey: queryKeys.tutors.list(filters),
-    queryFn: () => tutorsService.getAll(filters),
+    queryFn: () => getTutorList(filters),
+  });
+}
+
+export function useTutorDetailQuery(id: string) {
+  return useQuery({
+    queryKey: queryKeys.tutors.detail(id),
+    queryFn: () => getTutorDetail(id),
+    enabled: Boolean(id),
   });
 }
 
 export function useCreateTutorMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: TutorPayload) => tutorsService.create(payload),
+    mutationFn: (payload: TutorPayload) => createTutor(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tutors.all });
     },
@@ -23,9 +39,10 @@ export function useUpdateTutorMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<TutorPayload> }) =>
-      tutorsService.update(id, payload),
-    onSuccess: () => {
+      updateTutor(id, payload),
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tutors.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tutors.detail(variables.id) });
     },
   });
 }
@@ -33,7 +50,7 @@ export function useUpdateTutorMutation() {
 export function useDeleteTutorMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => tutorsService.delete(id),
+    mutationFn: (id: string) => deleteTutor(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tutors.all });
     },

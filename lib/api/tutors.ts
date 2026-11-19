@@ -1,48 +1,36 @@
-import { apiClient } from "./client";
+import {
+  getTutorList,
+  getTutorDetail,
+  createTutor,
+  updateTutor,
+  deleteTutor,
+  TutorPayload,
+  TutorsFilterParams,
+} from "@/utils/api-requests/tutors";
 import { TutorItem } from "./types";
-export type { TutorItem };
 
-export interface TutorPayload {
-  name: string;
-  email?: string;
-  title?: string;
-  bio?: string;
-  avatar?: string;
-  specialization?: string[];
-  education?: string;
-  experienceYears?: number;
-  rating?: number;
-  hourlyRate?: number;
-  phone?: string;
-  status?: "active" | "inactive";
-}
+export type { TutorPayload, TutorsFilterParams, TutorItem };
 
 export const tutorsService = {
-  getAll: async (params?: { specialization?: string }): Promise<TutorItem[]> => {
-    return apiClient<TutorItem[]>("/tutors", { params });
+  getAll: async (params?: TutorsFilterParams): Promise<TutorItem[]> => {
+    return getTutorList(params);
   },
 
   getById: async (id: string): Promise<TutorItem> => {
-    return apiClient<TutorItem>(`/tutors/${id}`);
+    return getTutorDetail(id);
   },
 
   create: async (payload: TutorPayload): Promise<TutorItem> => {
-    return apiClient<TutorItem>("/tutors", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createTutor(payload);
   },
 
   update: async (id: string, payload: Partial<TutorPayload>): Promise<TutorItem> => {
-    return apiClient<TutorItem>(`/tutors/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
+    return updateTutor(id, payload);
   },
 
   delete: async (id: string): Promise<{ id: string }> => {
-    return apiClient<{ id: string }>(`/tutors/${id}`, {
-      method: "DELETE",
-    });
+    return deleteTutor(id);
   },
 };
+
+export const tutorsApi = tutorsService;

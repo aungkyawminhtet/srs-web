@@ -1,11 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authService, LoginPayload, RegisterPayload, UserSession } from "@/lib/api";
+import {
+  login,
+  register,
+  logout,
+  refreshToken,
+  getCurrentUser,
+  LoginPayload,
+  RegisterPayload,
+} from "@/utils/api-requests/auth";
 import { queryKeys } from "./queryKeys";
 
 export function useProfileQuery(enabled: boolean = true) {
   return useQuery({
     queryKey: queryKeys.auth.profile,
-    queryFn: () => authService.getProfile(),
+    queryFn: () => getCurrentUser(),
     enabled,
     retry: false,
   });
@@ -14,7 +22,7 @@ export function useProfileQuery(enabled: boolean = true) {
 export function useLoginMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (credentials: LoginPayload) => authService.login(credentials),
+    mutationFn: (credentials: LoginPayload) => login(credentials),
     onSuccess: (user) => {
       queryClient.setQueryData(queryKeys.auth.profile, user);
       queryClient.invalidateQueries({ queryKey: queryKeys.enrollments.my });
@@ -26,7 +34,7 @@ export function useLoginMutation() {
 export function useRegisterMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: RegisterPayload) => authService.register(payload),
+    mutationFn: (payload: RegisterPayload) => register(payload),
     onSuccess: (user) => {
       queryClient.setQueryData(queryKeys.auth.profile, user);
     },
@@ -36,9 +44,19 @@ export function useRegisterMutation() {
 export function useLogoutMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: () => logout(),
     onSuccess: () => {
       queryClient.clear();
+    },
+  });
+}
+
+export function useRefreshTokenMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => refreshToken(),
+    onSuccess: (user) => {
+      queryClient.setQueryData(queryKeys.auth.profile, user);
     },
   });
 }

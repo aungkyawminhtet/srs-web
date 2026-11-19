@@ -1,34 +1,41 @@
-import { apiClient } from "./client";
+import {
+  getScheduleList,
+  getWeeklySchedule,
+  getScheduleDetail,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  SchedulePayload,
+} from "@/utils/api-requests/schedules";
 import { ScheduleItem } from "./types";
 
-export interface SchedulePayload {
-  courseCode: string;
-  courseTitle: string;
-  dayOfWeek: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
-  dayDate: string;
-  startTime: string;
-  endTime: string;
-  section: string;
-  teachingType: "LECT" | "LAB" | "TUTORIAL";
-  buildingRoom: string;
-  tutorName?: string;
-}
+export type { SchedulePayload, ScheduleItem };
+export type ScheduleBlock = ScheduleItem;
 
 export const schedulesService = {
   getWeekly: async (params?: { studentId?: string }): Promise<ScheduleItem[]> => {
-    return apiClient<ScheduleItem[]>("/schedules", { params });
+    return getWeeklySchedule(params?.studentId);
+  },
+
+  getAll: async (params?: { studentId?: string; tutorId?: string }): Promise<ScheduleItem[]> => {
+    return getScheduleList(params);
+  },
+
+  getById: async (id: string): Promise<ScheduleItem> => {
+    return getScheduleDetail(id);
   },
 
   create: async (payload: SchedulePayload): Promise<ScheduleItem> => {
-    return apiClient<ScheduleItem>("/schedules", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createSchedule(payload);
+  },
+
+  update: async (id: string, payload: Partial<SchedulePayload>): Promise<ScheduleItem> => {
+    return updateSchedule(id, payload);
   },
 
   delete: async (id: string): Promise<{ id: string }> => {
-    return apiClient<{ id: string }>(`/schedules/${id}`, {
-      method: "DELETE",
-    });
+    return deleteSchedule(id);
   },
 };
+
+export const schedulesApi = schedulesService;
