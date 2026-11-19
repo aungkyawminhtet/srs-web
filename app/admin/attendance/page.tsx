@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
   PaginationContent,
@@ -43,6 +44,12 @@ import {
 export default function AdminAttendancePage() {
   const [selectedTab, setSelectedTab] = useState("oversight");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [selectedLearner, setSelectedLearner] = useState({
     name: "Emma",
@@ -56,6 +63,7 @@ export default function AdminAttendancePage() {
     note: "Lin's note: Emma is explaining her steps more clearly. Next focus: translating word problems into equations.",
   });
 
+  // 2 sample items aligned with DB
   const learners = [
     {
       id: "L-1",
@@ -94,82 +102,6 @@ export default function AdminAttendancePage() {
       graphing: 80,
       wordProblems: 75,
       note: "Thiri's note: Great curiosity during water and materials experiment. Completed journal entry on time.",
-    },
-    {
-      id: "L-3",
-      name: "Liam Patel",
-      plan: "Math foundations · Priya Shah",
-      attendance: "7 / 8",
-      attendanceSub: "1 absence",
-      practice: "72%",
-      practiceSub: "↑ 5 points",
-      report: "Overdue",
-      action: "Remind tutor",
-      programTag: "MATH FOUNDATIONS · LAST 8 LESSONS",
-      title: "Liam's learning trend",
-      score: "72%",
-      scoreDiff: "↑ 5 pts",
-      equations: 75,
-      graphing: 70,
-      wordProblems: 70,
-      note: "Priya's note: Missing one makeup session for fractions worksheet. Monthly summary due.",
-    },
-    {
-      id: "L-4",
-      name: "Mia Lopez",
-      plan: "Reading & writing · Daniel Brooks",
-      attendance: "7 / 8",
-      attendanceSub: "1 absence",
-      practice: "76%",
-      practiceSub: "↑ 9 points",
-      report: "In review",
-      action: "Review report",
-      programTag: "READING & WRITING · LAST 6 LESSONS",
-      title: "Mia's learning trend",
-      score: "76%",
-      scoreDiff: "↑ 9 pts",
-      equations: 80,
-      graphing: 75,
-      wordProblems: 72,
-      note: "Daniel's note: Essay thesis statement significantly stronger. Pacing on paragraph transitions improving.",
-    },
-    {
-      id: "L-5",
-      name: "Oliver Kim",
-      plan: "Creative computing · Alex Rivera",
-      attendance: "6 / 8",
-      attendanceSub: "2 absences",
-      practice: "68%",
-      practiceSub: "No recent change",
-      report: "Overdue",
-      action: "Check in",
-      programTag: "CREATIVE COMPUTING · LAST 8 LESSONS",
-      title: "Oliver's learning trend",
-      score: "68%",
-      scoreDiff: "No recent change",
-      equations: 65,
-      graphing: 70,
-      wordProblems: 68,
-      note: "Alex's note: Two sessions missed in October due to sports schedule. Guardian check-in recommended.",
-    },
-    {
-      id: "L-6",
-      name: "Ben Carter",
-      plan: "Reading & writing · Daniel Brooks",
-      attendance: "8 / 8",
-      attendanceSub: "Last 30 days",
-      practice: "80%",
-      practiceSub: "↑ 7 points",
-      report: "Shared",
-      action: "View progress",
-      programTag: "READING & WRITING · LAST 8 LESSONS",
-      title: "Ben's learning trend",
-      score: "80%",
-      scoreDiff: "↑ 7 pts",
-      equations: 85,
-      graphing: 80,
-      wordProblems: 75,
-      note: "Daniel's note: Consistent participation in group discussions. Completed all peer review notes.",
     },
   ];
 
@@ -374,62 +306,93 @@ export default function AdminAttendancePage() {
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-slate-100">
-                {filteredLearners.map((item) => {
-                  const isSelected = selectedLearner.name === item.name.split(" ")[0];
-                  return (
-                    <TableRow
-                      key={item.id}
-                      onClick={() =>
-                        setSelectedLearner({
-                          name: item.name.split(" ")[0],
-                          program: item.programTag,
-                          title: item.title,
-                          score: item.score,
-                          scoreDiff: item.scoreDiff,
-                          equations: item.equations,
-                          graphing: item.graphing,
-                          wordProblems: item.wordProblems,
-                          note: item.note,
-                        })
-                      }
-                      className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${
-                        isSelected ? "bg-teal-50/50" : ""
-                      }`}
-                    >
+                {isLoading ? (
+                  Array.from({ length: 2 }).map((_, idx) => (
+                    <TableRow key={`att-skeleton-${idx}`}>
                       <TableCell className="py-3 px-4">
-                        <div className="font-bold text-[#0B1E2B]">{item.name}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">{item.plan}</div>
+                        <Skeleton className="h-4 w-28 mb-1" />
+                        <Skeleton className="h-3 w-36" />
                       </TableCell>
                       <TableCell className="py-3 px-3">
-                        <div className="font-semibold text-slate-800">{item.attendance}</div>
-                        <div className="text-[10px] text-slate-400">{item.attendanceSub}</div>
+                        <Skeleton className="h-4 w-12 mb-1" />
+                        <Skeleton className="h-3 w-20" />
                       </TableCell>
                       <TableCell className="py-3 px-3">
-                        <div className="font-semibold text-slate-800">{item.practice}</div>
-                        <div className="text-[10px] text-teal-700">{item.practiceSub}</div>
+                        <Skeleton className="h-4 w-12 mb-1" />
+                        <Skeleton className="h-3 w-16" />
                       </TableCell>
                       <TableCell className="py-3 px-3">
-                        <Badge
-                          variant="secondary"
-                          className={`border-none font-bold text-[10px] ${
-                            item.report === "Shared"
-                              ? "bg-teal-100 text-teal-800"
-                              : item.report === "Overdue"
-                              ? "bg-rose-100 text-rose-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          {item.report}
-                        </Badge>
+                        <Skeleton className="h-5 w-16 rounded-md" />
                       </TableCell>
                       <TableCell className="py-3 px-4 text-right">
-                        <span className="font-semibold text-teal-800 hover:underline">
-                          {item.action}
-                        </span>
+                        <Skeleton className="h-4 w-20 ml-auto" />
                       </TableCell>
                     </TableRow>
-                  );
-                })}
+                  ))
+                ) : filteredLearners.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-slate-400">
+                      No learners found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredLearners.map((item) => {
+                    const isSelected = selectedLearner.name === item.name.split(" ")[0];
+                    return (
+                      <TableRow
+                        key={item.id}
+                        onClick={() =>
+                          setSelectedLearner({
+                            name: item.name.split(" ")[0],
+                            program: item.programTag,
+                            title: item.title,
+                            score: item.score,
+                            scoreDiff: item.scoreDiff,
+                            equations: item.equations,
+                            graphing: item.graphing,
+                            wordProblems: item.wordProblems,
+                            note: item.note,
+                          })
+                        }
+                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${
+                          isSelected ? "bg-teal-50/50" : ""
+                        }`}
+                      >
+                        <TableCell className="py-3 px-4">
+                          <div className="font-bold text-[#0B1E2B]">{item.name}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{item.plan}</div>
+                        </TableCell>
+                        <TableCell className="py-3 px-3">
+                          <div className="font-semibold text-slate-800">{item.attendance}</div>
+                          <div className="text-[10px] text-slate-400">{item.attendanceSub}</div>
+                        </TableCell>
+                        <TableCell className="py-3 px-3">
+                          <div className="font-semibold text-slate-800">{item.practice}</div>
+                          <div className="text-[10px] text-teal-700">{item.practiceSub}</div>
+                        </TableCell>
+                        <TableCell className="py-3 px-3">
+                          <Badge
+                            variant="secondary"
+                            className={`border-none font-bold text-[10px] ${
+                              item.report === "Shared"
+                                ? "bg-teal-100 text-teal-800"
+                                : item.report === "Overdue"
+                                ? "bg-rose-100 text-rose-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {item.report}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-right">
+                          <span className="font-semibold text-teal-800 hover:underline">
+                            {item.action}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
@@ -439,13 +402,13 @@ export default function AdminAttendancePage() {
             <Pagination className="mx-0 w-auto">
               <PaginationContent className="gap-1 font-bold text-slate-600">
                 <PaginationItem>
-                  <PaginationPrevious href="#" className="h-7 px-2 text-xs hover:bg-slate-100" />
+                  <PaginationPrevious href="?page=1" className="h-7 px-2 text-xs hover:bg-slate-100" />
                 </PaginationItem>
                 <PaginationItem>
                   <span className="px-2 text-xs">Page 1</span>
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationNext href="#" className="h-7 px-2 text-xs hover:bg-slate-100" />
+                  <PaginationNext href="?page=1" className="h-7 px-2 text-xs hover:bg-slate-100" />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>

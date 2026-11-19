@@ -34,7 +34,7 @@ export function AdminSidebar() {
     { label: "Overview", href: "/admin", icon: LayoutDashboard },
     { label: "Lessons", href: "/admin/lessons", icon: Calendar },
     { label: "Students & families", href: "/admin/students", icon: Users },
-    { label: "Tutors", href: "/admin/tutors", icon: GraduationCap },
+    { label: "Tutors & Instructors", href: "/admin/tutors", icon: GraduationCap },
     { label: "Consultations", href: "/admin/consultations", icon: MessageSquare },
     { label: "Programs", href: "/admin/programs", icon: BookOpen },
     { label: "Payments", href: "/admin/payments", icon: CreditCard },

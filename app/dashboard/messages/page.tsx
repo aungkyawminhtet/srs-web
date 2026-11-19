@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   Plus,
@@ -12,95 +13,216 @@ import {
   Info,
   ShieldCheck,
   CheckCircle2,
+  User,
+  Sparkles,
 } from "lucide-react";
+import { useRealtimeChat, ChatUser } from "@/hooks/useRealtimeChat";
+import { ChatMessage } from "@/lib/instructorStore";
 
-export default function MessagesPage() {
+const INITIAL_MESSAGES_BY_THREAD: Record<string, ChatMessage[]> = {
+  lin: [
+    {
+      id: "lin-1",
+      senderName: "Lin Chen",
+      senderRole: "instructor",
+      time: "Today · 3:45 PM ET",
+      text: "Hi Emma! You made a great connection with balancing equations yesterday. I've shared practice 03 for today. Let me know if you need help on problem 5!",
+      isMe: false,
+    },
+    {
+      id: "lin-2",
+      senderName: "Emma Thant",
+      senderRole: "student",
+      time: "Today · 4:02 PM ET",
+      text: "Thank you Lin! I'm reviewing question 5 right now. We have live class at 5:00 PM, right?",
+      isMe: true,
+    },
+    {
+      id: "lin-3",
+      senderName: "Lin Chen",
+      senderRole: "instructor",
+      time: "Today · 4:10 PM ET",
+      text: "Yes, exactly! Classroom room S1 202 is already open. See you at 5:00 PM!",
+      isMe: false,
+    },
+  ],
+  maya: [
+    {
+      id: "maya-1",
+      senderName: "Dr. Maya Patel",
+      senderRole: "instructor",
+      time: "Yesterday · 2:15 PM",
+      text: "Hi Emma, remember to submit your Cell Structure & Osmosis lab reflection before our Thursday meeting!",
+      isMe: false,
+    },
+    {
+      id: "maya-2",
+      senderName: "Emma Thant",
+      senderRole: "student",
+      time: "Yesterday · 4:30 PM",
+      text: "Hi Dr. Maya, yes! I'm finishing the microscopy slide diagrams today.",
+      isMe: true,
+    },
+  ],
+  support: [
+    {
+      id: "supp-1",
+      senderName: "Academic Support",
+      senderRole: "admin",
+      time: "Nov 2 · 10:00 AM",
+      text: "Welcome to Fun & Learn! If you ever need help with timetable scheduling, classroom audio/video, or payments, reach us here.",
+      isMe: false,
+    },
+  ],
+};
+
+function MessagesContent() {
+  const searchParams = useSearchParams();
+  const advisorParam = searchParams ? searchParams.get("advisor") : null;
+
   const [activeThread, setActiveThread] = useState("lin");
-  const [filter, setFilter] = useState<"all" | "unread">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [inputText, setInputText] = useState("");
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: "1",
-      sender: "Lin Chen",
-      role: "Tutor",
-      time: "Lin Chen · 3:45 PM ET",
-      text: "Hi May! Emma made a good connection with balancing equations. I've shared a short practice for today. She's explaining her steps more clearly.",
-      attachment: {
-        name: "The balance method.pdf",
-        size: "PDF · 420 KB",
-      },
-      isOutgoing: false,
-    },
-    {
-      id: "2",
-      sender: "May Thant",
-      role: "Parent",
-      time: "May Thant · 4:02 PM ET · Parent",
-      text: "Thank you, Lin. We'll take a look before the lesson. Could you revisit word problems with Emma today?",
-      isOutgoing: true,
-    },
-    {
-      id: "3",
-      sender: "Lin Chen",
-      role: "Tutor",
-      time: "Lin Chen · 4:10 PM ET",
-      text: "Absolutely! We'll begin with a real-life example and turn it into an equation together. See Emma at 5:00 PM!",
-      isOutgoing: false,
-    },
-  ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const currentUser: ChatUser = {
+    name: "Emma Thant",
+    role: "student",
+    email: "emma.thant@student.edu",
+  };
+
+  useEffect(() => {
+    if (advisorParam) {
+      if (advisorParam.toLowerCase().includes("maya")) {
+        setActiveThread("maya");
+      } else {
+        setActiveThread("lin");
+      }
+    }
+  }, [advisorParam]);
+
+  // Hook for realtime Socket.IO chat
+  const {
+    messages,
+    sendMessage,
+    sendTyping,
+    isConnected,
+    typingUser,
+  } = useRealtimeChat({
+    threadId: activeThread,
+    currentUser,
+    initialMessages: INITIAL_MESSAGES_BY_THREAD[activeThread] || [],
+  });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typingUser]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(e.target.value);
+    sendTyping(e.target.value.length > 0);
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: String(Date.now()),
-        sender: "May Thant",
-        role: "Parent",
-        time: "May Thant · Just now · Parent",
-        text: inputText,
-        isOutgoing: true,
-      },
-    ]);
+    sendMessage(inputText.trim());
     setInputText("");
+    sendTyping(false);
   };
+
+  const advisors = [
+    {
+      id: "lin",
+      name: "Lin Chen",
+      role: "Lead Math & CS Advisor",
+      sub: "Algebra I & Database Systems",
+      time: "3:45 PM",
+      avatar: "L",
+      lastMsg: "Classroom room S1 202 is already open. See you at 5:00 PM!",
+    },
+    {
+      id: "maya",
+      name: "Dr. Maya Patel",
+      role: "Lead Science Mentor",
+      sub: "Science & Biology",
+      time: "Yesterday",
+      avatar: "M",
+      lastMsg: "Remember to submit your Cell Structure & Osmosis lab reflection!",
+    },
+    {
+      id: "support",
+      name: "Academic Support Team",
+      role: "Platform Operations",
+      sub: "Student Support & Coordination",
+      time: "Nov 2",
+      avatar: "S",
+      lastMsg: "Welcome to Fun & Learn! Let us know if you need any assistance.",
+    },
+  ];
+
+  const filteredAdvisors = advisors.filter((adv) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      adv.name.toLowerCase().includes(q) ||
+      adv.role.toLowerCase().includes(q) ||
+      adv.sub.toLowerCase().includes(q) ||
+      adv.lastMsg.toLowerCase().includes(q)
+    );
+  });
+
+  const currentAdvisor = advisors.find((a) => a.id === activeThread) || advisors[0];
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-12 font-sans">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <span className="text-[11px] font-bold tracking-widest uppercase text-slate-400 font-mono block mb-1">
-            Thursday, November 5, 2026 · Learner Portal
+            Student Portal · Advisor Communications
           </span>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0B1E2B] tracking-tight font-display">
-            In the conversation.
+            Direct Messages with Course Advisors
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            A shared space for your family, your tutors and our learning team.
+            Realtime bidirectional communication powered by Socket.IO with instant updates and live feedback.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => alert("Start a new message")}
-          className="inline-flex items-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-full shadow-xs hover:shadow transition-all shrink-0 self-start sm:self-auto cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New message</span>
-        </button>
+        {/* Realtime Status Badge */}
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+              isConnected
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                : "bg-amber-50 text-amber-800 border-amber-200"
+            }`}
+          >
+            {isConnected ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Socket.IO Live
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                Offline Mode (Local Cached)
+              </>
+            )}
+          </span>
+        </div>
       </div>
 
-      {/* Main Split Chat Layout */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
-        
+      {/* Main Messaging Box (2-column layout) */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[620px] h-[calc(100vh-230px)]">
         {/* Left Inbox Column (4 cols) */}
-        <div className="lg:col-span-4 border-r border-slate-200/80 flex flex-col justify-between">
+        <div className="lg:col-span-4 border-r border-slate-200/80 flex flex-col justify-between bg-slate-50/50">
           <div className="p-4 sm:p-5 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 font-display">Inbox</h2>
+            <h2 className="text-base font-bold text-slate-900 font-display">
+              Course Advisors
+            </h2>
 
             {/* Search */}
             <div className="relative">
@@ -108,270 +230,144 @@ export default function MessagesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search people or messages..."
-                className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#0A5C4C]"
+                placeholder="Search advisors or messages..."
+                className="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#0A5C4C]"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
 
-            {/* Filter pills */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setFilter("all")}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  filter === "all"
-                    ? "bg-[#0A5C4C] text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilter("unread")}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  filter === "unread"
-                    ? "bg-[#0A5C4C] text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Unread · 1
-              </button>
-            </div>
-
-            {/* Thread list */}
-            <div className="space-y-1.5 pt-1">
-              
-              {/* Thread 1 (Lin Chen - Active) */}
-              <div
-                onClick={() => setActiveThread("lin")}
-                className={`p-3 rounded-2xl cursor-pointer transition-all ${
-                  activeThread === "lin"
-                    ? "bg-[#EAF5F2] border border-[#CCE8E0]"
-                    : "hover:bg-slate-50 border border-transparent"
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-bold text-slate-900">Lin Chen</span>
-                  <span className="text-[10px] text-slate-400">3:45 PM</span>
-                </div>
-                <div className="text-[11px] font-semibold text-[#0A5C4C] mb-0.5">
-                  Math · Algebra I
-                </div>
-                <p className="text-xs text-slate-600 line-clamp-1 leading-snug">
-                  Today&apos;s question and a little encouragement.
-                </p>
-              </div>
-
-              {/* Thread 2 (Thiri Aung) */}
-              <div
-                onClick={() => setActiveThread("thiri")}
-                className={`p-3 rounded-2xl cursor-pointer transition-all ${
-                  activeThread === "thiri"
-                    ? "bg-[#EAF5F2] border border-[#CCE8E0]"
-                    : "hover:bg-slate-50 border border-transparent"
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-bold text-slate-900">Thiri Aung</span>
-                  <span className="text-[10px] text-slate-400">Yesterday</span>
-                </div>
-                <div className="text-[11px] font-semibold text-amber-700 mb-0.5">
-                  Noah · Science explorers
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-1 leading-snug">
-                  For Friday, please bring a cup of warm water and a spoon.
-                </p>
-              </div>
-
-              {/* Thread 3 (Family support) */}
-              <div
-                onClick={() => setActiveThread("support")}
-                className={`p-3 rounded-2xl cursor-pointer transition-all ${
-                  activeThread === "support"
-                    ? "bg-[#EAF5F2] border border-[#CCE8E0]"
-                    : "hover:bg-slate-50 border border-transparent"
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-bold text-slate-900">Family support</span>
-                  <span className="text-[10px] text-slate-400">Nov 2</span>
-                </div>
-                <div className="text-[11px] font-semibold text-slate-600 mb-0.5">
-                  Team Fun &amp; Learn
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-1 leading-snug">
-                  We received your calendar sync questions.
-                </p>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Safe space info note */}
-          <div className="p-4 m-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-[#0A5C4C] shrink-0 mt-0.5" />
-            <div className="text-[11px] text-slate-600 leading-relaxed">
-              <strong className="text-slate-900">A safe learning space: </strong>
-              Parent accounts can see tutor conversations for their children.
+            {/* Advisor Threads */}
+            <div className="space-y-2 pt-1">
+              {filteredAdvisors.map((adv) => {
+                const isSelected = activeThread === adv.id;
+                return (
+                  <div
+                    key={adv.id}
+                    onClick={() => setActiveThread(adv.id)}
+                    className={`p-3.5 rounded-2xl cursor-pointer transition-all border ${
+                      isSelected
+                        ? "bg-[#EAF5F2] border-[#CCE8E0] shadow-2xs"
+                        : "hover:bg-white border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-bold text-slate-900">{adv.name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{adv.time}</span>
+                    </div>
+                    <div className="text-[11px] font-semibold text-[#0A5C4C] mb-0.5">
+                      {adv.sub}
+                    </div>
+                    <p className="text-xs text-slate-600 line-clamp-1 leading-snug">
+                      {adv.lastMsg}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Right Active Conversation Column (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col justify-between h-full min-h-[560px]">
-          
-          {/* Conversation Header */}
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="lg:col-span-8 flex flex-col justify-between h-full bg-white">
+          {/* Thread Header */}
+          <div className="p-4 sm:p-5 border-b border-slate-200/80 flex items-center justify-between shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-slate-200">
-                <Image
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop"
-                  alt="Lin Chen"
-                  fill
-                  className="object-cover"
-                />
+              <div className="w-10 h-10 rounded-full bg-[#0A5C4C] text-white flex items-center justify-center font-bold text-sm">
+                {currentAdvisor.avatar}
               </div>
               <div>
-                <div className="text-sm font-bold text-slate-900">Lin Chen</div>
-                <div className="text-[11px] text-slate-500">
-                  Math tutor · English &amp; Chinese · <span className="text-slate-700 font-semibold">Emma Thant · Algebra I</span>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {currentAdvisor.name}
+                </h3>
+                <div className="text-[11px] text-[#0A5C4C] font-semibold">
+                  {currentAdvisor.role} · {currentAdvisor.sub}
                 </div>
               </div>
             </div>
 
-            <button
-              type="button"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Messages Scroll Feed */}
-          <div className="flex-1 p-5 space-y-5 overflow-y-auto">
-            {/* Date separator */}
-            <div className="flex items-center justify-center">
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider font-mono">
-                Today · November 5
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Channel
               </span>
             </div>
+          </div>
 
-            {/* Bubble 1 (Lin Chen incoming) */}
-            <div className="space-y-1.5 max-w-lg">
-              <div className="bg-slate-50 border border-slate-100 text-slate-800 p-4 rounded-3xl rounded-tl-sm text-xs sm:text-sm leading-relaxed space-y-3">
-                <p>
-                  Hi May! Emma made a good connection with balancing equations. I&apos;ve shared a short practice for today. She&apos;s explaining her steps more clearly.
-                </p>
-
-                {/* Attachment chip */}
-                <div className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <Download className="w-4 h-4 text-[#0A5C4C]" />
-                    <div>
-                      <div className="font-bold text-slate-800">The balance method.pdf</div>
-                      <div className="text-[10px] text-slate-400">PDF · 420 KB</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="font-bold text-[#0A5C4C] hover:underline cursor-pointer"
-                  >
-                    Download
-                  </button>
-                </div>
-              </div>
-              <div className="text-[10px] text-slate-400 pl-2">
-                Lin Chen · 3:45 PM ET
-              </div>
-            </div>
-
-            {/* Bubble 2 (May Thant parent outgoing) */}
-            <div className="space-y-1.5 max-w-lg ml-auto flex flex-col items-end">
-              <div className="bg-[#EAF5F2] border border-[#CCE8E0] text-slate-900 p-4 rounded-3xl rounded-tr-sm text-xs sm:text-sm leading-relaxed">
-                Thank you, Lin. We&apos;ll take a look before the lesson. Could you revisit word problems with Emma today?
-              </div>
-              <div className="text-[10px] text-slate-400 pr-2">
-                May Thant · 4:02 PM ET · Parent
-              </div>
-            </div>
-
-            {/* Bubble 3 (Lin Chen incoming) */}
-            <div className="space-y-1.5 max-w-lg">
-              <div className="bg-slate-50 border border-slate-100 text-slate-800 p-4 rounded-3xl rounded-tl-sm text-xs sm:text-sm leading-relaxed">
-                Absolutely! We&apos;ll begin with a real-life example and turn it into an equation together. See Emma at 5:00 PM!
-              </div>
-              <div className="text-[10px] text-slate-400 pl-2">
-                Lin Chen · 4:10 PM ET
-              </div>
-            </div>
-
-            {/* Dynamic additional messages */}
-            {chatMessages.slice(3).map((msg) => (
+          {/* Messages Stream */}
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/30">
+            {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`space-y-1.5 max-w-lg ${
-                  msg.isOutgoing ? "ml-auto flex flex-col items-end" : ""
+                className={`flex flex-col ${
+                  msg.isMe ? "items-end" : "items-start"
                 }`}
               >
+                <div className="flex items-center gap-1.5 mb-1 px-1">
+                  <span className="text-[11px] font-bold text-slate-500">
+                    {msg.isMe ? "You (Emma)" : msg.senderName}
+                  </span>
+                  <span className="text-[10px] text-slate-300">·</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {msg.time}
+                  </span>
+                </div>
                 <div
-                  className={`p-4 rounded-3xl text-xs sm:text-sm leading-relaxed ${
-                    msg.isOutgoing
-                      ? "bg-[#EAF5F2] border border-[#CCE8E0] text-slate-900 rounded-tr-sm"
-                      : "bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-sm"
+                  className={`p-3.5 sm:p-4 rounded-2xl max-w-md text-sm leading-relaxed ${
+                    msg.isMe
+                      ? "bg-[#0A5C4C] text-white rounded-br-xs shadow-xs"
+                      : "bg-white border border-slate-200/80 text-slate-800 rounded-bl-xs shadow-2xs"
                   }`}
                 >
                   {msg.text}
                 </div>
-                <div className={`text-[10px] text-slate-400 ${msg.isOutgoing ? "pr-2" : "pl-2"}`}>
-                  {msg.time}
-                </div>
               </div>
             ))}
-          </div>
 
-          {/* Composer */}
-          <div className="p-4 sm:p-5 border-t border-slate-100 bg-white space-y-2">
-            <form onSubmit={handleSend} className="space-y-3">
-              <textarea
-                rows={2}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Write a message to Lin..."
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-[#0A5C4C]"
-              />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <Paperclip className="w-3.5 h-3.5" />
-                  <span>PDF or image · Max 10 MB</span>
-                </div>
-
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow-xs transition-all cursor-pointer"
-                >
-                  <span>Send message</span>
-                  <Send className="w-3.5 h-3.5" />
-                </button>
+            {/* Typing indicator bubble */}
+            {typingUser && (
+              <div className="flex items-center gap-2 text-xs text-slate-500 italic px-3 py-1.5 bg-white rounded-full w-fit border border-slate-200/60 shadow-2xs">
+                <span className="flex gap-1 items-center">
+                  <span className="w-1.5 h-1.5 bg-[#0A5C4C] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1.5 h-1.5 bg-[#0A5C4C] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1.5 h-1.5 bg-[#0A5C4C] rounded-full animate-bounce" />
+                </span>
+                <span>{typingUser} is typing...</span>
               </div>
-            </form>
+            )}
 
-            <div className="text-[10px] text-slate-400 leading-snug pt-1">
-              Tutors typically reply within 1 business day. For urgent lesson changes, please contact support.
-            </div>
+            <div ref={messagesEndRef} />
           </div>
 
+          {/* Message Input Form */}
+          <form
+            onSubmit={handleSend}
+            className="p-3 sm:p-4 border-t border-slate-200/80 bg-white flex items-center gap-2"
+          >
+            <input
+              type="text"
+              value={inputText}
+              onChange={handleInputChange}
+              placeholder={`Message ${currentAdvisor.name}... (Live Socket.IO)`}
+              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:border-[#0A5C4C] focus:ring-1 focus:ring-[#0A5C4C]"
+            />
+            <button
+              type="submit"
+              disabled={!inputText.trim()}
+              className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#0A5C4C] hover:bg-[#08483b] disabled:opacity-40 text-white transition-all shrink-0 cursor-pointer shadow-xs"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
         </div>
-
-      </div>
-
-      {/* Illustrative Footer Note */}
-      <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-4 border-t border-slate-200/60 font-sans">
-        <Info className="w-3.5 h-3.5 shrink-0" />
-        <span>Sample workspace · Students, tutors, progress and billing are illustrative. No real student data is shown.</span>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading messages...</div>}>
+      <MessagesContent />
+    </Suspense>
   );
 }

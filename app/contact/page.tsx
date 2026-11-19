@@ -2,15 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { 
-  ArrowRight, 
-  ArrowUpRight, 
-  Check, 
-  CheckCircle2, 
-  ChevronDown, 
-  MessageSquare, 
-  User, 
-  Globe2, 
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  MessageSquare,
+  User,
+  Globe2,
   Sparkles,
   HelpCircle,
   KeyRound
@@ -18,7 +18,6 @@ import {
 import { Navbar } from "@/components/home/Navbar";
 import { Footer } from "@/components/home/Footer";
 import { ConsultationBanner } from "@/components/shared/ConsultationBanner";
-import { useAuthModal } from "@/components/auth/AuthModalContext";
 import {
   Select,
   SelectContent,
@@ -28,7 +27,6 @@ import {
 } from "@/components/ui/select";
 
 export default function ContactPage() {
-  const { openAuthModal } = useAuthModal();
   const [name, setName] = useState("Mei Chen");
   const [email, setEmail] = useState("mei.chen@example.com");
   const [topic, setTopic] = useState("Programs & matching");
@@ -102,7 +100,7 @@ export default function ContactPage() {
   ];
 
   const filteredFaqs = activeFaqCategory === "all"
-    ? faqs
+      ? faqs
     : faqs.filter((f) => f.category === activeFaqCategory || f.category === "all");
 
   return (
@@ -113,7 +111,6 @@ export default function ContactPage() {
         {/* Hero Section */}
         <section className="pt-12 pb-16 md:pt-16 md:pb-20 bg-[#FBFBFA]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
             <div className="max-w-3xl mb-12">
               <span className="text-xs font-bold uppercase tracking-wider text-[#0A5C4C] block mb-2 font-mono">
                 GOOD QUESTIONS WELCOME
@@ -122,13 +119,14 @@ export default function ContactPage() {
                 Let&apos;s make the next step easier.
               </h1>
               <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-sans">
-                Choosing a program, navigating a new school system or finding your way around your account? Our family team is a helpful place to begin.
+                Choosing a program, navigating a new school system or finding
+                your way around your account? Our family team is a helpful place
+                to begin.
               </p>
             </div>
 
             {/* 3 Top Action Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-              
               <div className="bg-white rounded-3xl p-7 border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="w-10 h-10 rounded-xl bg-[#EAF5F2] text-[#0A5C4C] flex items-center justify-center mb-4">
@@ -138,7 +136,8 @@ export default function ContactPage() {
                     New to Fun and Learn?
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans mb-4">
-                    Start with a free conversation about your child&apos;s needs and learning style.
+                    Start with a free conversation about your child&apos;s needs
+                    and learning style.
                   </p>
                 </div>
                 <div>
@@ -161,18 +160,18 @@ export default function ContactPage() {
                     Already learning with us?
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans mb-4">
-                    Use your parent account to review lessons, see notes, and contact your team.
+                    Use your parent account to review lessons, see notes, and
+                    contact your team.
                   </p>
                 </div>
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => openAuthModal("login")}
+                  <Link
+                    href="/login"
                     className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#0A5C4C] hover:underline cursor-pointer"
                   >
                     <span>Go to parent login</span>
                     <ArrowUpRight className="w-4 h-4" />
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -185,7 +184,8 @@ export default function ContactPage() {
                     Prefer another language?
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans mb-4">
-                    Request family support and advice in English, Burmese or Chinese.
+                    Request family support and advice in English, Burmese or
+                    Chinese.
                   </p>
                 </div>
                 <div>
@@ -198,13 +198,14 @@ export default function ContactPage() {
                   </a>
                 </div>
               </div>
-
             </div>
 
             {/* Split Contact Form Section */}
-            <div id="message-form" className="bg-[#EAF5F2]/60 rounded-3xl p-8 sm:p-12 border border-[#CCE8E0] scroll-mt-24">
+            <div
+              id="message-form"
+              className="bg-[#EAF5F2]/60 rounded-3xl p-8 sm:p-12 border border-[#CCE8E0] scroll-mt-24"
+            >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                
                 {/* Left Info */}
                 <div className="lg:col-span-5 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#0A5C4C] block font-mono">
@@ -214,7 +215,9 @@ export default function ContactPage() {
                     Tell us what&apos;s on your mind.
                   </h2>
                   <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-sans">
-                    Share your questions and how you&apos;d like us to respond. You do not need to know the right program or the right words yet.
+                    Share your questions and how you&apos;d like us to respond.
+                    You do not need to know the right program or the right words
+                    yet.
                   </p>
 
                   <ul className="space-y-2.5 pt-2 text-xs sm:text-sm text-slate-800 font-sans">
@@ -233,7 +236,9 @@ export default function ContactPage() {
                   </ul>
 
                   <p className="text-[11px] text-slate-500 italic pt-2 leading-relaxed font-sans border-t border-[#CCE8E0]">
-                    Please do not include passwords or sensitive student records in your message. For scheduled lesson prompts, use your parent account so your learning team has the right context.
+                    Please do not include passwords or sensitive student records
+                    in your message. For scheduled lesson prompts, use your
+                    parent account so your learning team has the right context.
                   </p>
                 </div>
 
@@ -250,7 +255,12 @@ export default function ContactPage() {
                         <span>Message sent • Confirmation</span>
                       </div>
                       <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                        Thank you, {name}! Our family team will reply to <span className="font-semibold text-slate-900">{email}</span> within 24 hours. You don&apos;t need to submit the same message again.
+                        Thank you, {name}! Our family team will reply to{" "}
+                        <span className="font-semibold text-slate-900">
+                          {email}
+                        </span>{" "}
+                        within 24 hours. You don&apos;t need to submit the same
+                        message again.
                       </p>
                       <div className="pt-2">
                         <button
@@ -263,7 +273,10 @@ export default function ContactPage() {
                       </div>
                     </div>
                   ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs sm:text-sm">
+                    <form
+                      onSubmit={handleSubmit}
+                      className="space-y-4 font-sans text-xs sm:text-sm"
+                    >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -296,17 +309,32 @@ export default function ContactPage() {
                           <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Topic *
                           </label>
-                          <Select value={topic} onValueChange={(val) => val && setTopic(val)}>
+                          <Select
+                            value={topic}
+                            onValueChange={(val) => val && setTopic(val)}
+                          >
                             <SelectTrigger className="w-full bg-white border-slate-200 text-xs sm:text-sm text-slate-700 h-10">
                               <SelectValue placeholder="Topic" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Programs & matching">Programs & matching</SelectItem>
-                              <SelectItem value="Pricing & packages">Pricing & packages</SelectItem>
-                              <SelectItem value="Lesson scheduling">Lesson scheduling</SelectItem>
-                              <SelectItem value="Account & login support">Account & login support</SelectItem>
-                              <SelectItem value="Multilingual family request">Multilingual family request</SelectItem>
-                              <SelectItem value="Other inquiry">Other inquiry</SelectItem>
+                              <SelectItem value="Programs & matching">
+                                Programs & matching
+                              </SelectItem>
+                              <SelectItem value="Pricing & packages">
+                                Pricing & packages
+                              </SelectItem>
+                              <SelectItem value="Lesson scheduling">
+                                Lesson scheduling
+                              </SelectItem>
+                              <SelectItem value="Account & login support">
+                                Account & login support
+                              </SelectItem>
+                              <SelectItem value="Multilingual family request">
+                                Multilingual family request
+                              </SelectItem>
+                              <SelectItem value="Other inquiry">
+                                Other inquiry
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -314,12 +342,17 @@ export default function ContactPage() {
                           <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Preferred language
                           </label>
-                          <Select value={language} onValueChange={(val) => val && setLanguage(val)}>
+                          <Select
+                            value={language}
+                            onValueChange={(val) => val && setLanguage(val)}
+                          >
                             <SelectTrigger className="w-full bg-white border-slate-200 text-xs sm:text-sm text-slate-700 h-10">
                               <SelectValue placeholder="Preferred language" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Chinese">Chinese (Mandarin)</SelectItem>
+                              <SelectItem value="Chinese">
+                                Chinese (Mandarin)
+                              </SelectItem>
                               <SelectItem value="Burmese">Burmese</SelectItem>
                               <SelectItem value="English">English</SelectItem>
                             </SelectContent>
@@ -349,7 +382,10 @@ export default function ContactPage() {
                             required
                             className="mt-0.5 rounded border-slate-300 text-[#0A5C4C] focus:ring-[#0A5C4C]"
                           />
-                          <span>I have read the privacy policy and agree to be contacted regarding my message.</span>
+                          <span>
+                            I have read the privacy policy and agree to be
+                            contacted regarding my message.
+                          </span>
                         </label>
                       </div>
 
@@ -366,17 +402,17 @@ export default function ContactPage() {
                     </form>
                   )}
                 </div>
-
               </div>
             </div>
-
           </div>
         </section>
 
         {/* FAQ Section */}
-        <section id="faq" className="py-20 md:py-24 bg-white border-t border-slate-200/80 scroll-mt-20">
+        <section
+          id="faq"
+          className="py-20 md:py-24 bg-white border-t border-slate-200/80 scroll-mt-20"
+        >
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            
             <div className="mb-10 text-center">
               <span className="text-xs font-bold uppercase tracking-wider text-[#0A5C4C] block mb-2 font-mono">
                 A LITTLE CLARITY
@@ -385,7 +421,8 @@ export default function ContactPage() {
                 What would you like to know?
               </h2>
               <p className="text-sm sm:text-base text-slate-600 mt-2 font-sans">
-                Start with the essentials. If your question is personal to your family, send us a message above.
+                Start with the essentials. If your question is personal to your
+                family, send us a message above.
               </p>
             </div>
 
@@ -432,7 +469,9 @@ export default function ContactPage() {
                 <span>Need help signing in?</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                Use &ldquo;Forgot password?&rdquo; on the login page. We&apos;ll send a reset link if an account exists for your email address. Never share your password with anyone.
+                Use &ldquo;Forgot password?&rdquo; on the login page. We&apos;ll
+                send a reset link if an account exists for your email address.
+                Never share your password with anyone.
               </p>
               <div className="pt-2">
                 <Link
@@ -444,7 +483,6 @@ export default function ContactPage() {
                 </Link>
               </div>
             </div>
-
           </div>
         </section>
 
@@ -465,10 +503,19 @@ export default function ContactPage() {
 
 function ArrowDownIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="12" y1="5" x2="12" y2="19"></line>
       <polyline points="19 12 12 19 5 12"></polyline>
     </svg>
   );
 }
-

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
   PaginationContent,
@@ -44,6 +45,12 @@ export default function AdminSchedulingPage() {
   const [selectedTab, setSelectedTab] = useState("week");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTutor, setSelectedTutor] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [selectedConflict, setSelectedConflict] = useState({
     title: "Resolve tutor overlap",
@@ -472,59 +479,84 @@ export default function AdminSchedulingPage() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-100">
-              <TableRow className="hover:bg-slate-50/80">
-                <TableCell className="py-3 px-4">
-                  <div className="font-bold text-[#0B1E2B]">
-                    Noah Thant · Science explorers
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">
-                    Guardian May requested a later Friday lesson
-                  </div>
-                </TableCell>
-                <TableCell className="py-3 px-3 text-slate-700 font-medium">
-                  Nov 6 · 6:00 PM ET
-                </TableCell>
-                <TableCell className="py-3 px-3 text-slate-600">
-                  Nov 6 · 6:00 PM ET
-                </TableCell>
-                <TableCell className="py-3 px-3">
-                  <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none text-[10px] font-bold">
-                    Awaiting tutor
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-3 px-4 text-right">
-                  <span className="font-semibold text-teal-800 hover:underline cursor-pointer">
-                    Ask Thiri about 7 PM
-                  </span>
-                </TableCell>
-              </TableRow>
+              {isLoading ? (
+                Array.from({ length: 2 }).map((_, idx) => (
+                  <TableRow key={`sched-skeleton-${idx}`}>
+                    <TableCell className="py-3 px-4">
+                      <Skeleton className="h-4 w-40 mb-1" />
+                      <Skeleton className="h-3 w-56" />
+                    </TableCell>
+                    <TableCell className="py-3 px-3">
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell className="py-3 px-3">
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell className="py-3 px-3">
+                      <Skeleton className="h-5 w-20 rounded-md" />
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-right">
+                      <Skeleton className="h-4 w-24 ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <>
+                  <TableRow className="hover:bg-slate-50/80">
+                    <TableCell className="py-3 px-4">
+                      <div className="font-bold text-[#0B1E2B]">
+                        Noah Thant · Science explorers
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Guardian May requested a later Friday lesson
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3 px-3 text-slate-700 font-medium">
+                      Nov 6 · 6:00 PM ET
+                    </TableCell>
+                    <TableCell className="py-3 px-3 text-slate-600">
+                      Nov 6 · 6:00 PM ET
+                    </TableCell>
+                    <TableCell className="py-3 px-3">
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none text-[10px] font-bold">
+                        Awaiting tutor
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-right">
+                      <span className="font-semibold text-teal-800 hover:underline cursor-pointer">
+                        Ask Thiri about 7 PM
+                      </span>
+                    </TableCell>
+                  </TableRow>
 
-              <TableRow className="hover:bg-slate-50/80">
-                <TableCell className="py-3 px-4">
-                  <div className="font-bold text-[#0B1E2B]">
-                    Oliver Kim · Creative computing
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">
-                    Proposed Nov 7 · Tutor outside availability
-                  </div>
-                </TableCell>
-                <TableCell className="py-3 px-3 text-slate-700 font-medium">
-                  Nov 7 · 2:00 PM ET
-                </TableCell>
-                <TableCell className="py-3 px-3 text-slate-600">
-                  Nov 7 · 11:00 AM PT
-                </TableCell>
-                <TableCell className="py-3 px-3">
-                  <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-none text-[10px] font-bold">
-                    Conflict
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-3 px-4 text-right">
-                  <span className="font-semibold text-teal-800 hover:underline cursor-pointer">
-                    Choose available slot
-                  </span>
-                </TableCell>
-              </TableRow>
+                  <TableRow className="hover:bg-slate-50/80">
+                    <TableCell className="py-3 px-4">
+                      <div className="font-bold text-[#0B1E2B]">
+                        Oliver Kim · Creative computing
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Proposed Nov 7 · Tutor outside availability
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3 px-3 text-slate-700 font-medium">
+                      Nov 7 · 2:00 PM ET
+                    </TableCell>
+                    <TableCell className="py-3 px-3 text-slate-600">
+                      Nov 7 · 11:00 AM PT
+                    </TableCell>
+                    <TableCell className="py-3 px-3">
+                      <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-none text-[10px] font-bold">
+                        Conflict
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-right">
+                      <span className="font-semibold text-teal-800 hover:underline cursor-pointer">
+                        Choose available slot
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                </>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -534,13 +566,13 @@ export default function AdminSchedulingPage() {
           <Pagination className="w-auto mx-0 justify-end">
             <PaginationContent className="gap-1 text-xs">
               <PaginationItem>
-                <PaginationPrevious href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
+                <PaginationPrevious href="?page=1" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
               </PaginationItem>
               <PaginationItem>
                 <span className="px-2 text-xs font-bold text-slate-700 select-none">Page 1</span>
               </PaginationItem>
               <PaginationItem>
-                <PaginationNext href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
+                <PaginationNext href="?page=1" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
               </PaginationItem>
             </PaginationContent>
           </Pagination>

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
   PaginationContent,
@@ -47,6 +48,13 @@ export default function AdminConsultationsPage() {
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOwner, setSelectedOwner] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [selectedInquiry, setSelectedInquiry] = useState<any>({
     id: "INQ-1042",
     name: "Aye Aye Win",
@@ -61,6 +69,7 @@ export default function AdminConsultationsPage() {
     internalNote: "request Burmese language support before confirming the call.",
   });
 
+  // 2 sample items aligned with DB
   const inquiries = [
     {
       id: "INQ-1042",
@@ -85,54 +94,6 @@ export default function AdminConsultationsPage() {
       learningNeeds: "Grade 10 SAT Math & Reading planning for Spring session.",
       familyPrefs: "English · Eastern Time · Weekends preferred",
       internalNote: "Family requested tutor with past college counseling background.",
-    },
-    {
-      id: "INQ-1040",
-      name: "Wei Zhang",
-      sub: "Grade 8 · Algebra I · Chinese",
-      stage: "Follow-up",
-      owner: "Jamie Lee",
-      action: "Send availability",
-      due: "Due today · 4:00 PM",
-      learningNeeds: "Needs support with quadratic equations and homework pacing.",
-      familyPrefs: "Chinese preferred for parent updates · Weekday evenings",
-      internalNote: "Lin Chen would be an optimal match.",
-    },
-    {
-      id: "INQ-1039",
-      name: "Grace Okafor",
-      sub: "Grade 4 · Reading · English",
-      stage: "New",
-      owner: "Unassigned",
-      action: "Assign & reply",
-      due: "Received today · 10:20 AM",
-      learningNeeds: "Reading comprehension and vocabulary enrichment.",
-      familyPrefs: "English · Eastern Time · Monday/Wednesday 4:30 PM",
-      internalNote: "First inquiry from elementary reading campaign.",
-    },
-    {
-      id: "INQ-1038",
-      name: "Luis Romero",
-      sub: "Grade 6 · Math · Spanish",
-      stage: "New",
-      owner: "Sofia Diaz",
-      action: "Reply in Spanish",
-      due: "Due today · 5:00 PM",
-      learningNeeds: "Grade 6 fractions and pre-algebra foundations.",
-      familyPrefs: "Spanish preferred · Central Time · Tuesdays",
-      internalNote: "Sofia Diaz assigned for Spanish consultation.",
-    },
-    {
-      id: "INQ-1037",
-      name: "Hana Park",
-      sub: "Grade 9 · Writing · English",
-      stage: "Booked",
-      owner: "Jamie Lee",
-      action: "Open consultation",
-      due: "Nov 7 · 10:00 AM ET",
-      learningNeeds: "High school essay writing and structured thesis development.",
-      familyPrefs: "English · Pacific Time",
-      internalNote: "Daniel Brooks recommended for writing group or 1-on-1.",
     },
   ];
 
@@ -348,46 +309,73 @@ export default function AdminConsultationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-slate-100">
-                {filteredInquiries.map((item) => {
-                  const isSelected = selectedInquiry?.id === item.id;
-                  return (
-                    <TableRow
-                      key={item.id}
-                      onClick={() => setSelectedInquiry(item)}
-                      className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${
-                        isSelected ? "bg-teal-50/50" : ""
-                      }`}
-                    >
+                {isLoading ? (
+                  Array.from({ length: 2 }).map((_, idx) => (
+                    <TableRow key={`inq-skeleton-${idx}`}>
                       <TableCell className="py-3 px-4">
-                        <div className="font-bold text-[#0B1E2B]">{item.name}</div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">{item.sub}</div>
+                        <Skeleton className="h-4 w-32 mb-1" />
+                        <Skeleton className="h-3 w-48" />
                       </TableCell>
                       <TableCell className="py-3 px-3">
-                        <Badge
-                          variant="secondary"
-                          className={`text-[10px] font-bold ${
-                            item.stage === "New"
-                              ? "bg-amber-100 text-amber-800 hover:bg-amber-100 border-none"
-                              : item.stage === "Booked"
-                              ? "bg-teal-100 text-teal-800 hover:bg-teal-100 border-none"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-100 border-none"
-                          }`}
-                        >
-                          {item.stage}
-                        </Badge>
+                        <Skeleton className="h-5 w-16 rounded-md" />
                       </TableCell>
-                      <TableCell className="py-3 px-3 text-slate-600 font-medium">
-                        {item.owner}
+                      <TableCell className="py-3 px-3">
+                        <Skeleton className="h-4 w-20" />
                       </TableCell>
                       <TableCell className="py-3 px-4 text-right">
-                        <div className="font-semibold text-teal-800 hover:underline">
-                          {item.action}
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">{item.due}</div>
+                        <Skeleton className="h-4 w-24 ml-auto mb-1" />
+                        <Skeleton className="h-3 w-16 ml-auto" />
                       </TableCell>
                     </TableRow>
-                  );
-                })}
+                  ))
+                ) : filteredInquiries.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center text-slate-400">
+                      No inquiries found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredInquiries.map((item) => {
+                    const isSelected = selectedInquiry?.id === item.id;
+                    return (
+                      <TableRow
+                        key={item.id}
+                        onClick={() => setSelectedInquiry(item)}
+                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${
+                          isSelected ? "bg-teal-50/50" : ""
+                        }`}
+                      >
+                        <TableCell className="py-3 px-4">
+                          <div className="font-bold text-[#0B1E2B]">{item.name}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">{item.sub}</div>
+                        </TableCell>
+                        <TableCell className="py-3 px-3">
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] font-bold ${
+                              item.stage === "New"
+                                ? "bg-amber-100 text-amber-800 hover:bg-amber-100 border-none"
+                                : item.stage === "Booked"
+                                ? "bg-teal-100 text-teal-800 hover:bg-teal-100 border-none"
+                                : "bg-slate-100 text-slate-700 hover:bg-slate-100 border-none"
+                            }`}
+                          >
+                            {item.stage}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-3 px-3 text-slate-600 font-medium">
+                          {item.owner}
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-right">
+                          <div className="font-semibold text-teal-800 hover:underline">
+                            {item.action}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{item.due}</div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
@@ -397,13 +385,13 @@ export default function AdminConsultationsPage() {
             <Pagination className="w-auto mx-0 justify-end">
               <PaginationContent className="gap-1 text-xs">
                 <PaginationItem>
-                  <PaginationPrevious href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
+                  <PaginationPrevious href="?page=1" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
                 </PaginationItem>
                 <PaginationItem>
                   <span className="px-2 text-xs font-bold text-slate-700 select-none">Page 1</span>
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationNext href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
+                  <PaginationNext href="?page=1" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>

@@ -486,13 +486,13 @@ export default function AdminCommunicationsPage() {
           <Pagination className="mx-0 w-auto">
             <PaginationContent className="gap-1 font-bold text-slate-600">
               <PaginationItem>
-                <PaginationPrevious href="#" className="h-7 px-2 text-xs hover:bg-slate-100" />
+                <PaginationPrevious href="?page=1" className="h-7 px-2 text-xs hover:bg-slate-100" />
               </PaginationItem>
               <PaginationItem>
                 <span className="px-2 text-xs">Page 1</span>
               </PaginationItem>
               <PaginationItem>
-                <PaginationNext href="#" className="h-7 px-2 text-xs hover:bg-slate-100" />
+                <PaginationNext href="?page=1" className="h-7 px-2 text-xs hover:bg-slate-100" />
               </PaginationItem>
             </PaginationContent>
           </Pagination>

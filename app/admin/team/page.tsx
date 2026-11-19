@@ -332,13 +332,13 @@ export default function AdminTeamPage() {
             <Pagination className="w-auto mx-0 justify-end">
               <PaginationContent className="gap-1 text-xs">
                 <PaginationItem>
-                  <PaginationPrevious href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
+                  <PaginationPrevious href="?page=1" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
                 </PaginationItem>
                 <PaginationItem>
                   <span className="px-2 text-xs font-bold text-slate-700 select-none">Page 1</span>
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationNext href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
+                  <PaginationNext href="?page=1" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>

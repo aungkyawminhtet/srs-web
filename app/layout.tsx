@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthModalProvider } from "@/components/auth/AuthModalContext";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Tutoreem | 1:1 Online Tutoring & Education Platform",
@@ -29,10 +29,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-[#FBFBFA] text-[#1E293B] antialiased">
-        <AuthModalProvider>
-          {children}
-          <AuthModal />
-        </AuthModalProvider>
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -154,7 +154,7 @@ export default async function ProgramDetailPage({ params }: ProgramPageProps) {
                   <div className="pt-4 border-t border-slate-100">
                     <div className="flex flex-col sm:flex-row items-center gap-3">
                       <Link
-                        href={`/register?program=${program.id}`}
+                        href={`/dashboard/enrollment?program=${program.id}`}
                         className="inline-flex items-center justify-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] text-white font-bold text-sm sm:text-base py-3.5 px-6 rounded-full shadow-xs hover:shadow transition-all group w-full sm:w-auto"
                       >
                         <span>Enroll in program</span>

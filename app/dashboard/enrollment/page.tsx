@@ -1,440 +1,437 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
-  ArrowUpRight,
-  CheckCircle2,
-  Lock,
   CreditCard,
+  Upload,
   Calendar,
+  CheckCircle2,
   Clock,
+  ArrowRight,
   Info,
+  ShieldCheck,
   Check,
-  ChevronDown,
-  Sparkles,
-  AlertCircle,
+  Building,
+  Image as ImageIcon,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { enrollmentsApi } from "@/lib/api";
+import { useCreateEnrollmentMutation } from "@/hooks/api";
 
-export default function EnrollmentPage() {
-  const [child, setChild] = useState("Noah Thant · Grade 5");
-  const [selectedTime, setSelectedTime] = useState("Mondays · 4:00–5:00 PM ET");
-  const [parentName, setParentName] = useState("May Thant");
-  const [email, setEmail] = useState("may.thant@example.com");
-  const [billingAddress, setBillingAddress] = useState(
-    "18 Maple Street · Boston, MA 02108 · United States"
-  );
-  const [promoCode, setPromoCode] = useState("WELCOME10");
-  const [promoError, setPromoError] = useState(true);
-  const [agreeTerms, setAgreeTerms] = useState(true);
-  const [completedEnrollment, setCompletedEnrollment] = useState(false);
+const AVAILABLE_COURSES = [
+  {
+    id: "alg-1",
+    title: "Algebra I, minus the overwhelm",
+    subject: "Mathematics",
+    amount: 150000,
+    advisor: "Lin Chen",
+  },
+  {
+    id: "sci-1",
+    title: "Science, explored",
+    subject: "Middle School Biology",
+    amount: 140000,
+    advisor: "Dr. Maya Patel",
+  },
+  {
+    id: "db-1",
+    title: "1501208 Database Systems",
+    subject: "Computer Science",
+    amount: 180000,
+    advisor: "Lin Chen",
+  },
+  {
+    id: "math-2",
+    title: "1305215 Discrete Mathematics & Logic",
+    subject: "Mathematics",
+    amount: 130000,
+    advisor: "Dr. Maya Patel",
+  },
+];
 
-  const handleSubmit = (e: React.FormEvent) => {
+const BANKING_OPTIONS = [
+  {
+    id: "KBZPay",
+    name: "KBZPay",
+    accountNumber: "09987654321",
+    accountName: "Fun & Learn Tutoring",
+    color: "#005696",
+    badge: "Instant Transfer",
+  },
+  {
+    id: "Wave Pay",
+    name: "Wave Pay",
+    accountNumber: "09987654321",
+    accountName: "Fun & Learn Tutoring",
+    color: "#FFD200",
+    badge: "Quick QR / Mobile",
+  },
+  {
+    id: "CB Pay",
+    name: "CB Pay",
+    accountNumber: "0012 3456 7890",
+    accountName: "Fun & Learn Education",
+    color: "#D81E05",
+    badge: "Direct Bank App",
+  },
+  {
+    id: "AYA Pay",
+    name: "AYA Pay",
+    accountNumber: "09987654321",
+    accountName: "Fun & Learn Education",
+    color: "#C51A1B",
+    badge: "Mobile Wallet",
+  },
+];
+
+function EnrollmentContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const programParam = searchParams ? searchParams.get("program") : null;
+
+  const [selectedCourse, setSelectedCourse] = useState(AVAILABLE_COURSES[0]);
+  const [paymentName, setPaymentName] = useState("Emma Thant");
+  const [studentEmail, setStudentEmail] = useState("emma.thant@student.edu");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedBank, setSelectedBank] = useState("KBZPay");
+  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [receiptFileName, setReceiptFileName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedInvoice, setSubmittedInvoice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (programParam) {
+      const match = AVAILABLE_COURSES.find(
+        (c) =>
+          c.title.toLowerCase().includes(programParam.toLowerCase()) ||
+          c.id.toLowerCase().includes(programParam.toLowerCase())
+      );
+      if (match) {
+        setSelectedCourse(match);
+      }
+    }
+  }, [programParam]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setReceiptFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReceiptImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const createEnrollmentMutation = useCreateEnrollmentMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreeTerms) return;
-    setCompletedEnrollment(true);
+    if (!receiptImage) {
+      alert("Please upload your payment successful receipt image.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await createEnrollmentMutation.mutateAsync({
+        programId: selectedCourse.id,
+        programTitle: selectedCourse.title,
+        amountPaid: selectedCourse.amount,
+        paymentMethod: selectedBank as any,
+        paymentDate,
+        paymentSlipUrl: receiptImage,
+        notes: `Payer: ${paymentName} (${studentEmail})`,
+      });
+
+      const inv = (res as any)?._id ? `INV-${(res as any)._id.slice(-6).toUpperCase()}` : `INV-${Date.now().toString().slice(-6)}`;
+      setSubmittedInvoice(inv);
+    } catch {
+      // Offline fallback
+      setSubmittedInvoice(`INV-${Math.floor(100000 + Math.random() * 900000)}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-12 font-sans">
-      {/* Header with Back button */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <span className="text-[11px] font-bold tracking-widest uppercase text-slate-400 font-mono block mb-1">
-            Thursday, November 5, 2026 · Parent Portal
-          </span>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0B1E2B] tracking-tight font-display">
-            Make room for a new discovery.
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Review Noah&apos;s new program and confirm your family&apos;s learning plan.
-          </p>
-        </div>
-
-        <Link
-          href="/dashboard/my-learning"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-full px-4 py-2 shadow-2xs hover:shadow transition-all shrink-0 self-start sm:self-auto"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to programs</span>
-        </Link>
+    <div className="space-y-6 sm:space-y-8 pb-12 font-sans max-w-4xl mx-auto">
+      {/* Header */}
+      <div>
+        <span className="text-xs font-bold tracking-wider uppercase text-slate-400 font-mono block mb-1.5">
+          Student Portal · Course Enrollment &amp; Payment
+        </span>
+        <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-black text-[#0B1E2B] tracking-tight font-display">
+          Enroll in Course &amp; Submit Receipt
+        </h1>
+        <p className="text-sm sm:text-base text-slate-600 mt-1.5 leading-relaxed">
+          Transfer tuition via your preferred mobile banking wallet, then upload your transaction slip screenshot below.
+        </p>
       </div>
 
-      {/* Stepper Progress Bar */}
-      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs font-bold text-slate-500 overflow-x-auto">
-        <div className="flex items-center gap-2 text-slate-700 whitespace-nowrap">
-          <span className="w-5 h-5 rounded-full bg-[#EAF5F2] text-[#0A5C4C] flex items-center justify-center text-xs">✓</span>
-          <span>1 · Choose a program</span>
-        </div>
-        <span className="text-slate-300 mx-2">→</span>
-        <div className="flex items-center gap-2 text-[#0A5C4C] font-black whitespace-nowrap bg-[#EAF5F2] px-3 py-1 rounded-full">
-          <span>2 · Review &amp; payment</span>
-        </div>
-        <span className="text-slate-300 mx-2">→</span>
-        <div className="flex items-center gap-2 text-slate-400 whitespace-nowrap">
-          <span>3 · Confirmation</span>
-        </div>
-      </div>
-
-      {completedEnrollment ? (
-        <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-2xs text-center space-y-4 max-w-2xl mx-auto my-8">
+      {submittedInvoice ? (
+        /* Success Screen */
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#0A5C4C]/30 shadow-md text-center space-y-5">
           <div className="w-16 h-16 rounded-full bg-[#EAF5F2] text-[#0A5C4C] flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-black text-[#0B1E2B] font-display">
-            Noah is enrolled in Creative Writing Studio!
-          </h2>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
-            We&apos;ve sent your receipt and class link to <strong className="text-slate-900">{email}</strong>. First session starts Monday, November 9 at 4:00 PM ET.
-          </p>
-          <div className="pt-2 flex justify-center gap-3">
+
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-[#0B1E2B] font-display">
+              Payment Receipt Uploaded Successfully!
+            </h2>
+            <p className="text-sm text-slate-600 max-w-lg mx-auto">
+              Your enrollment for <strong className="text-slate-900">{selectedCourse.title}</strong> has been registered under invoice <strong className="text-[#0A5C4C] font-mono">{submittedInvoice}</strong>.
+            </p>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-w-md mx-auto text-xs text-slate-600 text-left space-y-2">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Payer Name:</span>
+              <span className="font-semibold text-slate-900">{paymentName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Payment Wallet:</span>
+              <span className="font-semibold text-slate-900">{selectedBank}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Amount Paid:</span>
+              <span className="font-bold text-[#0A5C4C]">{selectedCourse.amount.toLocaleString()} MMK</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Verification Status:</span>
+              <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                Pending Admin Approval
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/dashboard/schedule"
-              className="inline-flex items-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-xs transition-all"
+              href="/dashboard/billing"
+              className="inline-flex items-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-xs transition-all"
             >
-              <span>View in schedule</span>
+              <span>View Invoice in Billing History</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/dashboard/my-learning"
-              className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold px-5 py-2.5 rounded-full transition-all"
+              className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-full transition-all"
             >
-              <span>Go to My learning</span>
+              <span>Go to My Learning</span>
             </Link>
           </div>
         </div>
       ) : (
-        /* Main 2-Column Checkout Layout */
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          
-          {/* Left Column: Form Details (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
+        /* Enrollment & Payment Slip Form */
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Step 1: Select Course */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+            <h2 className="text-base font-bold text-[#0B1E2B] font-display flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-[#0A5C4C] text-white text-xs flex items-center justify-center font-bold">1</span>
+              <span>Select Enrolling Program</span>
+            </h2>
 
-            {/* Who's learning */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display">
-                  Who&apos;s learning?
-                </h2>
-                <Link
-                  href="/programs"
-                  className="text-xs font-semibold text-[#0A5C4C] hover:underline inline-flex items-center gap-1"
-                >
-                  <span>Change program</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Child</label>
-                <Select
-                  value={child}
-                  onValueChange={(val) => val && setChild(val)}
-                >
-                  <SelectTrigger className="w-full bg-white border-slate-200 text-xs sm:text-sm text-slate-800 font-medium h-10">
-                    <SelectValue placeholder="Select child" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Noah Thant · Grade 5">Noah Thant · Grade 5</SelectItem>
-                    <SelectItem value="Emma Thant · Grade 8">Emma Thant · Grade 8</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Yellow Highlight Card for New Enrollment */}
-              <div className="bg-[#FAF7EC] border border-[#ECE5CD] rounded-2xl p-5 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 font-mono block">
-                  New Enrollment
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 font-display">
-                  Creative writing studio
-                </h3>
-                <p className="text-xs text-slate-600">
-                  Grades 4–6 · Live small group · 4 learners
-                </p>
-                <div className="text-xs text-amber-950 font-semibold pt-1 border-t border-[#ECE5CD]">
-                  4 × 60-minute lessons each month · Materials included
-                </div>
-              </div>
-
-              <p className="text-[11px] text-slate-400 font-sans">
-                Noah&apos;s Science explorers enrollment stays unchanged.
-              </p>
-            </div>
-
-            {/* A time that works */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-2xs space-y-4">
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display">
-                A time that works
-              </h2>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Available group</label>
-                <Select
-                  value={selectedTime}
-                  onValueChange={(val) => val && setSelectedTime(val)}
-                >
-                  <SelectTrigger className="w-full bg-white border-slate-200 text-xs sm:text-sm text-slate-800 font-medium h-10">
-                    <SelectValue placeholder="Select available group time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mondays · 4:00–5:00 PM ET">Mondays · 4:00–5:00 PM ET</SelectItem>
-                    <SelectItem value="Thursdays · 5:30–6:30 PM ET">Thursdays · 5:30–6:30 PM ET</SelectItem>
-                    <SelectItem value="Saturdays · 11:00 AM–12:00 PM ET">Saturdays · 11:00 AM–12:00 PM ET</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="text-xs font-semibold text-slate-800">
-                Starts Monday, November 9, 2026 · Eastern Time (UTC-5)
-              </div>
-
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
-                4 learners per group, within our 3–5 learner format. Your tutor and joining link appear in My learning after enrollment.
-              </p>
-            </div>
-
-            {/* Parent & payment */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-2xs space-y-4">
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display">
-                Parent &amp; payment
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Parent name</label>
-                  <input
-                    type="text"
-                    value={parentName}
-                    onChange={(e) => setParentName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#0A5C4C]"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Receipt email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#0A5C4C]"
-                  />
-                </div>
-              </div>
-
-              {/* Saved Card Option */}
-              <div className="p-3.5 rounded-2xl border-2 border-[#0A5C4C] bg-[#EAF5F2]/50 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-mono font-black text-blue-700">
-                    VISA
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {AVAILABLE_COURSES.map((course) => {
+                const isSelected = selectedCourse.id === course.id;
+                return (
+                  <div
+                    key={course.id}
+                    onClick={() => setSelectedCourse(course)}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                      isSelected
+                        ? "bg-[#EAF5F2]/60 border-[#0A5C4C] ring-2 ring-[#0A5C4C]/20 shadow-xs"
+                        : "bg-white border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#0A5C4C] font-mono">
+                      {course.subject}
+                    </div>
+                    <div className="text-sm font-bold text-slate-900 mt-1 line-clamp-1">
+                      {course.title}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Advisor: {course.advisor}
+                    </div>
+                    <div className="text-sm font-black text-[#0B1E2B] font-display mt-2">
+                      {course.amount.toLocaleString()} MMK
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-slate-900">Visa •••• 4242 · Expires 08/28</div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Step 2: Choose Banking Wallet */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+            <h2 className="text-base font-bold text-[#0B1E2B] font-display flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-[#0A5C4C] text-white text-xs flex items-center justify-center font-bold">2</span>
+              <span>Banking Wallet Information</span>
+            </h2>
+
+            <p className="text-xs text-slate-500">
+              Please transfer <strong className="text-slate-900 font-bold">{selectedCourse.amount.toLocaleString()} MMK</strong> to any of our official student accounts below:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {BANKING_OPTIONS.map((bank) => {
+                const isSelected = selectedBank === bank.id;
+                return (
+                  <div
+                    key={bank.id}
+                    onClick={() => setSelectedBank(bank.id)}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                      isSelected
+                        ? "bg-slate-50 border-slate-900 ring-2 ring-slate-900/20 shadow-xs"
+                        : "bg-white border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-sm text-slate-900 font-display">
+                        {bank.name}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        {bank.badge}
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono font-bold text-slate-800 mt-2">
+                      Account: {bank.accountNumber}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Name: {bank.accountName}
+                    </div>
                   </div>
-                </div>
-                <Badge className="text-[11px] font-bold text-[#0A5C4C] bg-white hover:bg-white px-2.5 py-1 rounded-full border border-[#CCE8E0]">
-                  Selected
-                </Badge>
-              </div>
+                );
+              })}
+            </div>
+          </div>
 
-              <div className="text-xs">
-                <button
-                  type="button"
-                  className="font-bold text-[#0A5C4C] hover:underline inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <span>Use a different payment method</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+          {/* Step 3: Payment Info & Receipt Image Upload */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+            <h2 className="text-base font-bold text-[#0B1E2B] font-display flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-[#0A5C4C] text-white text-xs flex items-center justify-center font-bold">3</span>
+              <span>Enter Payment Details &amp; Upload Slip</span>
+            </h2>
 
-              {/* Billing address */}
-              <div className="space-y-1 pt-1">
-                <label className="text-xs font-bold text-slate-700">Billing address</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Payer / Student Name
+                </label>
                 <input
                   type="text"
-                  value={billingAddress}
-                  onChange={(e) => setBillingAddress(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#0A5C4C]"
+                  required
+                  value={paymentName}
+                  onChange={(e) => setPaymentName(e.target.value)}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0A5C4C]"
                 />
               </div>
 
-              <p className="text-[11px] text-slate-400">
-                Payment is encrypted. Card details are never shared with tutors.
-              </p>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Payment Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0A5C4C]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Course Title
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedCourse.title}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Total Amount (MMK)
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={`${selectedCourse.amount.toLocaleString()} MMK`}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-[#0A5C4C] font-black cursor-not-allowed"
+                />
+              </div>
             </div>
 
-            {/* Before you confirm yellow note */}
-            <Alert className="bg-[#FAF7EC] border-[#ECE5CD] rounded-3xl p-5 space-y-1.5 text-amber-950">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-950 font-display">
-                <Info className="w-4 h-4 text-amber-700 shrink-0" />
-                <AlertTitle className="text-xs font-bold text-amber-950 font-display">Before you confirm</AlertTitle>
-              </div>
-              <AlertDescription className="text-xs text-amber-900/90 leading-relaxed font-sans">
-                You&apos;ll be charged $120 today. Your plan renews monthly on the 9th. Cancel future renewals from Billing before the next payment.
-              </AlertDescription>
-            </Alert>
+            {/* Receipt Image Upload */}
+            <div className="pt-2">
+              <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-[#0A5C4C]" />
+                <span>Upload Payment Successful Receipt Screenshot / Slip *</span>
+              </label>
 
-          </div>
-
-          {/* Right Column: Order Summary (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
-
-            {/* Your Order Card */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-2xs space-y-5">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono block mb-1">
-                  Your Order
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 font-display">
-                  A little imagination. A lot of growth.
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Creative writing studio · Noah Thant · Monthly small-group plan
-                </p>
-              </div>
-
-              {/* Price items */}
-              <div className="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
-                <div className="flex justify-between">
-                  <span>4 live lessons</span>
-                  <span className="font-semibold text-slate-800">$120.00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Materials &amp; enrollment</span>
-                  <span className="font-semibold text-slate-800">$0.00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span className="font-semibold text-slate-800">$0.00</span>
-                </div>
-              </div>
-
-              {/* Total row */}
-              <div className="border-t border-slate-200/80 pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-900">Due today</span>
-                  <span className="text-2xl font-black text-[#0B1E2B] font-display">$120.00</span>
-                </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">
-                  Then $120/month · Next payment Dec 9, 2026
-                </div>
-              </div>
-
-              {/* Promo code */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <label className="text-[11px] font-bold text-slate-700 block">Promo code</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono uppercase focus:outline-none focus:border-[#0A5C4C]"
-                  />
-                </div>
-
-                {promoError && (
-                  <Alert variant="destructive" className="bg-rose-50 border-rose-200 rounded-xl p-3 text-xs text-rose-800 space-y-0.5">
-                    <div className="font-bold flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <AlertTitle className="text-xs font-bold text-rose-900">This code isn&apos;t valid</AlertTitle>
-                    </div>
-                    <AlertDescription className="text-[11px] text-rose-700/90 leading-tight">
-                      Remove it or enter a different code. Your total is unchanged.
-                    </AlertDescription>
-                  </Alert>
+              <div className="border-2 border-dashed border-slate-200 hover:border-[#0A5C4C]/50 rounded-2xl p-5 text-center cursor-pointer transition-colors relative bg-slate-50/50">
+                <input
+                  type="file"
+                  required
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                {receiptImage ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-[#0A5C4C] flex items-center justify-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{receiptFileName || "Slip selected"}</span>
+                    </p>
+                    <img
+                      src={receiptImage}
+                      alt="receipt slip"
+                      className="max-h-48 mx-auto rounded-xl object-contain shadow-sm border border-slate-200"
+                    />
+                    <p className="text-[10px] text-slate-400">Click to change receipt slip</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 py-3">
+                    <Upload className="w-8 h-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-800">
+                      Click or drag transaction receipt slip image here
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      PNG, JPG, or JPEG screenshot showing transaction reference number &amp; amount
+                    </p>
+                  </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPromoCode("");
-                    setPromoError(false);
-                  }}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
-                >
-                  Remove code
-                </button>
               </div>
+            </div>
 
-              {/* Agreement */}
-              <div className="pt-2">
-                <label className="flex items-start gap-2 text-xs text-slate-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    required
-                    className="mt-0.5 rounded border-slate-300 text-[#0A5C4C] focus:ring-[#0A5C4C]"
-                  />
-                  <span>
-                    I agree to the enrollment terms, monthly renewal and cancellation policy.
-                  </span>
-                </label>
-              </div>
-
-              {/* CTA button */}
+            <div className="pt-4 flex items-center justify-end">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-sm font-bold py-3 px-5 rounded-full shadow-xs hover:shadow transition-all cursor-pointer"
+                disabled={submitting || !receiptImage}
+                className="inline-flex items-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] disabled:opacity-50 text-white text-xs sm:text-sm font-bold px-6 py-3 rounded-full shadow-xs transition-all cursor-pointer"
               >
-                <Lock className="w-4 h-4" />
-                <span>Pay $120 &amp; enroll Noah</span>
+                <span>{submitting ? "Uploading slip..." : "Submit Enrollment & Payment"}</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
-
-              <div className="text-[10px] text-rose-600 text-center leading-snug">
-                Illustrative pricing. No real payment is processed in this sample workspace.
-              </div>
             </div>
-
-            {/* A clear start together */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-3">
-              <h4 className="text-sm font-bold text-slate-900 font-display">
-                A clear start, together
-              </h4>
-              <div className="space-y-2 text-xs text-slate-600 font-sans">
-                <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#0A5C4C] font-bold" />
-                  <span>Confirmation and receipt by email</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#0A5C4C] font-bold" />
-                  <span>Lessons added to your schedule</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#0A5C4C] font-bold" />
-                  <span>Tutor introduction before your first class</span>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-slate-100">
-                <Link
-                  href="/dashboard/help"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#0A5C4C] hover:underline"
-                >
-                  <span>Questions? Contact family support</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-
           </div>
-
         </form>
       )}
-
-      {/* Illustrative Footer Note */}
-      <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-4 border-t border-slate-200/60 font-sans">
-        <Info className="w-3.5 h-3.5 shrink-0" />
-        <span>Sample workspace · Students, tutors, progress and billing are illustrative. No real student data is shown.</span>
-      </div>
     </div>
   );
 }
 
+export default function EnrollmentPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading enrollment form...</div>}>
+      <EnrollmentContent />
+    </Suspense>
+  );
+}

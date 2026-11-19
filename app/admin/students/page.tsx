@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -10,612 +10,905 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  AlertCircle,
-  Clock,
   CheckCircle2,
   Download,
+  Filter,
+  FileSpreadsheet,
+  X,
+  Edit2,
+  Trash2,
+  Eye,
+  Camera,
+  GraduationCap,
+  Mail,
+  Phone,
+  BookOpen,
+  Calendar,
+  AlertTriangle,
 } from "lucide-react";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { studentsApi, StudentRecord } from "@/lib/api";
+import { useStudentsQuery } from "@/hooks/api";
+import { ImageUploadField } from "@/components/shared/ImageUploadField";
 import { Badge } from "@/components/ui/badge";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationNext,
-} from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const DEFAULT_STUDENTS: StudentRecord[] = [
+  {
+    _id: "s1",
+    studentId: "STU-2026-0001",
+    name: "Emma Thant",
+    email: "emma.thant@student.edu",
+    phone: "+95 9 987654321",
+    grade: "Grade 8",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    role: "student",
+    createdAt: "2026-11-01",
+    enrolledCourses: [
+      { _id: "c1", title: "Algebra I, minus the overwhelm", subject: "Mathematics" },
+      { _id: "c2", title: "1501208 Database Systems", subject: "Computer Science" },
+    ],
+  },
+  {
+    _id: "s2",
+    studentId: "STU-2026-0002",
+    name: "Noah Thant",
+    email: "noah.thant@student.edu",
+    phone: "+95 9 987654322",
+    grade: "Grade 5",
+    avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
+    role: "student",
+    createdAt: "2026-11-02",
+    enrolledCourses: [
+      { _id: "c3", title: "Science, explored", subject: "Biology" },
+    ],
+  },
+];
+
+const AVAILABLE_GRADES = [
+  "Grade 3",
+  "Grade 4",
+  "Grade 5",
+  "Grade 6",
+  "Grade 7",
+  "Grade 8",
+  "Grade 9",
+  "Grade 10",
+  "Grade 11",
+  "Grade 12",
+  "College Pathway",
+];
 
 export default function AdminStudentsPage() {
-  const [selectedTab, setSelectedTab] = useState("students");
+  const { data: serverStudents, isLoading } = useStudentsQuery();
+  const [students, setStudents] = useState<StudentRecord[]>(DEFAULT_STUDENTS);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedGrade, setSelectedGrade] = useState("all");
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const [selectedStudent, setSelectedStudent] = useState<any>({
-    id: "ST-1008",
-    name: "Emma Thant",
+  // Create Student Modal
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
     grade: "Grade 8",
-    status: "Active learner",
-    plan: "Grade 8 · Algebra I · Lin Chen · One-to-one",
-    guardian: "May Thant · Parent & billing contact · Verified",
-    sibling: "Noah Thant · Grade 5 · Science explorers",
-    prefs: "English · Burmese support on request · America/New_York (UTC-5 today)",
-    nextLesson: "Today · 5:00–6:00 PM ET · Linear equations",
-    billing: "2 of 8 lessons completed · $240 monthly · Paid Nov 1",
+    password: "student2026!",
+    avatar: "",
   });
 
-  const students = [
-    {
-      id: "ST-1008",
-      name: "Emma Thant",
-      grade: "Grade 8",
-      guardian: "May Thant",
-      guardianSub: "2 linked children",
-      plan: "Algebra I",
-      planSub: "Lin Chen · One-to-one",
-      status: "Active",
-      action: "View profile",
-      sibling: "Noah Thant · Grade 5 · Science explorers",
-      prefs: "English · Burmese support on request · America/New_York (UTC-5 today)",
-      nextLesson: "Today · 5:00–6:00 PM ET · Linear equations",
-      billing: "2 of 8 lessons completed · $240 monthly · Paid Nov 1",
-    },
-    {
-      id: "ST-1009",
-      name: "Noah Thant",
-      grade: "Grade 5",
-      guardian: "May Thant",
-      guardianSub: "2 linked children",
-      plan: "Science explorers",
-      planSub: "Thiri Aung · One-to-one",
-      status: "Active",
-      action: "View profile",
-      sibling: "Emma Thant · Grade 8 · Algebra I",
-      prefs: "English · Burmese support on request · Eastern Time",
-      nextLesson: "Friday · 6:00–7:00 PM ET · Solar System",
-      billing: "1 of 4 lessons completed · $120 monthly · Paid Nov 1",
-    },
-    {
-      id: "ST-1012",
-      name: "Liam Patel",
-      grade: "Grade 6",
-      guardian: "Anita Patel",
-      guardianSub: "English · ET",
-      plan: "Math foundations",
-      planSub: "Priya Shah · One-to-one",
-      status: "Active",
-      action: "View profile",
-      sibling: "None",
-      prefs: "English · Eastern Time",
-      nextLesson: "Monday · 4:00–5:00 PM ET · Decimals",
-      billing: "2 of 8 lessons completed · $240 monthly",
-    },
-    {
-      id: "ST-1021",
-      name: "Mia Lopez",
-      grade: "Grade 7",
-      guardian: "Elena Lopez",
-      guardianSub: "Spanish · ET",
-      plan: "Reading & writing",
-      planSub: "Daniel Brooks · Group",
-      status: "Active",
-      action: "View profile",
-      sibling: "None",
-      prefs: "Spanish / English · America/New_York",
-      nextLesson: "Today · 5:30–6:30 PM ET",
-      billing: "Enrolled in Small Group · $140 monthly",
-    },
-    {
-      id: "ST-1025",
-      name: "Oliver Kim",
-      grade: "Grade 7",
-      guardian: "Jin Kim",
-      guardianSub: "English · PT",
-      plan: "Creative computing",
-      planSub: "Alex Rivera · One-to-one",
-      status: "Active",
-      action: "View profile",
-      sibling: "None",
-      prefs: "English · Pacific Time",
-      nextLesson: "Saturday · 11:00 AM ET",
-      billing: "4 of 8 lessons completed · $240 monthly",
-    },
-    {
-      id: "ST-1128",
-      name: "Ethan Wilson",
-      grade: "Grade 9",
-      guardian: "Rachel Wilson",
-      guardianSub: "English · ET",
-      plan: "Algebra I",
-      planSub: "Tutor to be matched",
-      status: "New",
-      action: "Match tutor",
-      sibling: "None",
-      prefs: "English · Eastern Time · After 5:00 PM",
-      nextLesson: "Pending tutor matching",
-      billing: "Consultation complete · Awaiting package selection",
-    },
-    {
-      id: "ST-1127",
-      name: "Ava Johnson",
-      grade: "Grade 3",
-      guardian: "Dana Johnson",
-      guardianSub: "Timezone missing",
-      plan: "Reading foundations",
-      planSub: "Consent pending",
-      status: "Incomplete",
-      action: "Complete",
-      sibling: "None",
-      prefs: "Timezone not confirmed yet",
-      nextLesson: "Pending guardian onboarding consent",
-      billing: "Onboarding stage",
-    },
-  ];
+  // Edit Student Modal
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
 
-  const filteredStudents = students.filter((item) => {
-    if (selectedTab === "needs-attention" && item.status !== "Incomplete") return false;
-    if (selectedStatus !== "all" && item.status.toLowerCase() !== selectedStatus.toLowerCase())
-      return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.id.toLowerCase().includes(q) ||
-        item.guardian.toLowerCase().includes(q) ||
-        item.plan.toLowerCase().includes(q)
-      );
+  // View Student Modal
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewingStudent, setViewingStudent] = useState<StudentRecord | null>(null);
+
+  // Delete Student Dialog
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingStudent, setDeletingStudent] = useState<StudentRecord | null>(null);
+
+  useEffect(() => {
+    if (serverStudents && Array.isArray(serverStudents) && serverStudents.length > 0) {
+      setStudents(serverStudents as any);
     }
-    return true;
+  }, [serverStudents]);
+
+  const showNotice = (msg: string) => {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), 3500);
+  };
+
+  // --- CRUD: CREATE ---
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.name || !createForm.email) return;
+
+    try {
+      const res = await studentsApi.create({
+        name: createForm.name,
+        email: createForm.email,
+        phone: createForm.phone,
+        grade: createForm.grade,
+        password: createForm.password,
+        avatar: createForm.avatar,
+      });
+
+      if (res && res.data) {
+        setStudents((prev) => [res.data as StudentRecord, ...prev]);
+        showNotice(`Student ${res.data.name} created successfully (${res.data.studentId})`);
+      } else {
+        throw new Error("Local fallback");
+      }
+    } catch (err: any) {
+      // Local fallback
+      const nextIndex = students.length + 1;
+      const year = new Date().getFullYear();
+      const generatedId = `STU-${year}-${String(nextIndex).padStart(4, "0")}`;
+
+      const created: StudentRecord = {
+        _id: `s-${Date.now()}`,
+        studentId: generatedId,
+        name: createForm.name,
+        email: createForm.email,
+        phone: createForm.phone,
+        grade: createForm.grade,
+        avatar: createForm.avatar,
+        role: "student",
+        createdAt: new Date().toISOString(),
+        enrolledCourses: [],
+      };
+
+      setStudents((prev) => [created, ...prev]);
+      showNotice(`Student ${created.name} created locally with ID: ${generatedId}`);
+    } finally {
+      setIsCreateOpen(false);
+      setCreateForm({
+        name: "",
+        email: "",
+        phone: "",
+        grade: "Grade 8",
+        password: "student2026!",
+        avatar: "",
+      });
+    }
+  };
+
+  // --- CRUD: UPDATE ---
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+
+    try {
+      await studentsApi.update(editingStudent._id, {
+        name: editingStudent.name,
+        email: editingStudent.email,
+        phone: editingStudent.phone,
+        grade: editingStudent.grade,
+        avatar: editingStudent.avatar,
+      });
+      showNotice(`Updated details for ${editingStudent.name}`);
+    } catch {
+      showNotice(`Updated profile for ${editingStudent.name} locally`);
+    }
+
+    setStudents((prev) =>
+      prev.map((s) => (s._id === editingStudent._id ? editingStudent : s))
+    );
+    setIsEditOpen(false);
+    setEditingStudent(null);
+  };
+
+  // --- CRUD: DELETE ---
+  const handleDeleteConfirm = async () => {
+    if (!deletingStudent) return;
+
+    try {
+      await studentsApi.delete(deletingStudent._id);
+      showNotice(`Student ${deletingStudent.name} removed from registry.`);
+    } catch {
+      showNotice(`Student ${deletingStudent.name} removed locally.`);
+    }
+
+    setStudents((prev) => prev.filter((s) => s._id !== deletingStudent._id));
+    setIsDeleteOpen(false);
+    setDeletingStudent(null);
+  };
+
+  // --- CSV EXPORT ---
+  const handleExportCsv = () => {
+    const headers = [
+      "Index",
+      "Student ID",
+      "Full Name",
+      "Email Address",
+      "Phone",
+      "Grade",
+      "Avatar URL",
+      "Registered Date",
+      "Enrolled Courses Count",
+    ];
+    const rows = students.map((s, idx) => [
+      idx + 1,
+      s.studentId,
+      `"${s.name}"`,
+      `"${s.email}"`,
+      `"${s.phone || "-"}"`,
+      `"${s.grade || "Grade 8"}"`,
+      `"${s.avatar || "-"}"`,
+      `"${new Date(s.createdAt).toLocaleDateString()}"`,
+      s.enrolledCourses?.length || 0,
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `registered_students_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotice(`Exported ${students.length} student records to CSV.`);
+  };
+
+  const filtered = students.filter((s) => {
+    if (selectedGrade !== "all" && s.grade !== selectedGrade) return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.email.toLowerCase().includes(q) ||
+      s.studentId.toLowerCase().includes(q) ||
+      (s.phone && s.phone.toLowerCase().includes(q))
+    );
   });
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb & Header */}
-      <div>
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-          Administration / Thursday, November 5, 2026
+    <div className="space-y-6 sm:space-y-8 pb-12 font-sans">
+      {/* Toast Notice */}
+      {notice && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0B1E2B] text-emerald-300 border border-emerald-500/40 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{notice}</span>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#0B1E2B] font-display">
-              Students & families
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Learning plans, guardians and family support in one place.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export directory</span>
-            </button>
-            <button
-              type="button"
-              className="px-3.5 py-2 bg-[#0A5C4C] hover:bg-[#08483B] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add student</span>
-            </button>
-          </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold tracking-wider uppercase text-slate-400 font-mono block mb-1.5">
+            Admin Workspace · Student Registry Management
+          </span>
+          <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-black text-[#0B1E2B] tracking-tight font-display">
+            Registered Students &amp; Student IDs
+          </h1>
+          <p className="text-sm sm:text-base text-slate-600 mt-1.5 leading-relaxed">
+            Manage student registrations, profile photos, credentials, and course enrollments with full CRUD.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-xs sm:text-sm font-bold px-4 py-2.5 rounded-full shadow-2xs hover:shadow transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-[#0A5C4C]" />
+            <span>Export Registry (CSV)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsCreateOpen(true)}
+            className="inline-flex items-center gap-2 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Register New Student</span>
+          </button>
         </div>
       </div>
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500">Active students</div>
-          <div className="text-3xl font-black text-[#0B1E2B] mt-1 font-display">128</div>
-          <div className="text-[11px] text-teal-700 font-medium mt-1">
-            6 new students in November
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            Total Students
+          </span>
+          <div className="text-2xl font-black text-[#0B1E2B] font-display">
+            {students.length}
           </div>
+          <span className="text-[11px] text-emerald-700 font-semibold mt-1 inline-flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            100% ID Assigned
+          </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500">Family accounts</div>
-          <div className="text-3xl font-black text-[#0B1E2B] mt-1 font-display">104</div>
-          <div className="text-[11px] text-slate-500 font-medium mt-1">
-            18 families with linked siblings
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            Active Enrollments
+          </span>
+          <div className="text-2xl font-black text-[#0B1E2B] font-display">
+            {students.reduce((acc, s) => acc + (s.enrolledCourses?.length || 0), 0)}
           </div>
+          <span className="text-[11px] text-slate-500 font-medium mt-1 block">
+            Across STEM &amp; AP tracks
+          </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500">Profiles to complete</div>
-          <div className="text-3xl font-black text-[#0B1E2B] mt-1 font-display">4</div>
-          <div className="text-[11px] text-amber-700 font-medium mt-1">
-            Guardian consent or timezone missing
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            Grades Represented
+          </span>
+          <div className="text-2xl font-black text-[#0B1E2B] font-display">
+            {new Set(students.map((s) => s.grade)).size}
           </div>
+          <span className="text-[11px] text-slate-500 font-medium mt-1 block">
+            Grade 3 through Grade 12
+          </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500">Language support</div>
-          <div className="text-3xl font-black text-[#0B1E2B] mt-1 font-display">23</div>
-          <div className="text-[11px] text-slate-500 font-medium mt-1">
-            Families requesting multilingual support
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            Local Storage Folder
+          </span>
+          <div className="text-sm font-bold text-emerald-800 font-mono mt-1">
+            /uploads/students
           </div>
+          <span className="text-[11px] text-slate-500 font-medium mt-1 block">
+            Third-party cloud ready
+          </span>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200/80 pb-2">
-        {[
-          { id: "students", label: "Students", count: 128 },
-          { id: "families", label: "Families", count: 104 },
-          { id: "needs-attention", label: "Needs attention", count: 4 },
-          { id: "archived", label: "Archived", count: 0 },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setSelectedTab(tab.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              selectedTab === tab.id
-                ? "bg-[#0B1E2B] text-white shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-            }`}
-          >
-            {tab.label} {tab.count > 0 && <span className="opacity-70 ml-1 font-normal">{tab.count}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* Filter and Search Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search name, guardian or student ID"
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-700"
+            placeholder="Search by student name, ID, email, or phone..."
+            className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
           />
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <Select
-            value={selectedStatus}
-            onValueChange={(val) => val && setSelectedStatus(val)}
+
+        <div className="flex items-center gap-2 shrink-0 overflow-x-auto">
+          <span className="text-xs text-slate-500 font-semibold shrink-0">Grade:</span>
+          <select
+            value={selectedGrade}
+            onChange={(e) => setSelectedGrade(e.target.value)}
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C] cursor-pointer"
           >
-            <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-700 font-medium text-xs h-8">
-              <SelectValue placeholder="Status: All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Status: All</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="incomplete">Incomplete</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select defaultValue="Grade: All">
-            <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-700 font-medium text-xs h-8">
-              <SelectValue placeholder="Grade: All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Grade: All">Grade: All</SelectItem>
-              <SelectItem value="Grades K-5">Grades K-5</SelectItem>
-              <SelectItem value="Grades 6-8">Grades 6-8</SelectItem>
-              <SelectItem value="Grades 9-12">Grades 9-12</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select defaultValue="Language: All">
-            <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-700 font-medium text-xs h-8">
-              <SelectValue placeholder="Language: All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Language: All">Language: All</SelectItem>
-              <SelectItem value="English">English</SelectItem>
-              <SelectItem value="Burmese">Burmese</SelectItem>
-              <SelectItem value="Chinese">Chinese</SelectItem>
-              <SelectItem value="Spanish">Spanish</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedStatus("all");
-            }}
-            className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2 py-1 cursor-pointer"
-          >
-            Reset
-          </button>
+            <option value="all">All Grades</option>
+            {AVAILABLE_GRADES.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Main Grid: Directory Table + Selected Student Profile */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Table (7 cols) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#0B1E2B]">Student directory</h2>
-            <button className="text-xs font-semibold text-teal-700 hover:underline flex items-center gap-1 cursor-pointer">
-              <span>Manage columns</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-
-          <div className="overflow-x-auto flex-1">
-            <Table className="w-full text-left text-xs">
-              <TableHeader className="bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                <TableRow>
-                  <TableHead className="py-3 px-4 font-bold text-slate-500">Student / Grade</TableHead>
-                  <TableHead className="py-3 px-3 font-bold text-slate-500">Guardian</TableHead>
-                  <TableHead className="py-3 px-3 font-bold text-slate-500">Learning Plan</TableHead>
-                  <TableHead className="py-3 px-3 font-bold text-slate-500">Status</TableHead>
-                  <TableHead className="py-3 px-4 text-right font-bold text-slate-500">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="divide-y divide-slate-100">
-                {filteredStudents.map((item) => {
-                  const isSelected = selectedStudent?.id === item.id;
-                  return (
-                    <TableRow
-                      key={item.id}
-                      onClick={() =>
-                        setSelectedStudent({
-                          id: item.id,
-                          name: item.name,
-                          grade: item.grade,
-                          status:
-                            item.status === "Active"
-                              ? "Active learner"
-                              : item.status === "New"
-                              ? "New student"
-                              : "Needs onboarding",
-                          plan: `${item.grade} · ${item.plan} · ${item.planSub}`,
-                          guardian: `${item.guardian} · Parent & billing contact · Verified`,
-                          sibling: item.sibling,
-                          prefs: item.prefs,
-                          nextLesson: item.nextLesson,
-                          billing: item.billing,
-                        })
-                      }
-                      className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${
-                        isSelected ? "bg-teal-50/50" : ""
-                      }`}
-                    >
-                      <TableCell className="py-3 px-4">
-                        <div className="font-bold text-[#0B1E2B]">{item.name}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          {item.id} · {item.grade}
+      {/* Students Table */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200/80 bg-slate-50/75 text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                <th className="py-3.5 px-4">Student Profile</th>
+                <th className="py-3.5 px-4">Student ID</th>
+                <th className="py-3.5 px-4">Grade</th>
+                <th className="py-3.5 px-4">Enrolled Courses</th>
+                <th className="py-3.5 px-4">Contact</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {isLoading ? (
+                Array.from({ length: 2 }).map((_, i) => (
+                  <tr key={`skel-${i}`} className="animate-pulse">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="w-10 h-10 rounded-full" />
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-3 w-36" />
                         </div>
-                      </TableCell>
-                      <TableCell className="py-3 px-3">
-                        <div className="font-medium text-slate-700">{item.guardian}</div>
-                        <div className="text-[10px] text-slate-400">{item.guardianSub}</div>
-                      </TableCell>
-                      <TableCell className="py-3 px-3">
-                        <div className="font-medium text-slate-700">{item.plan}</div>
-                        <div className="text-[10px] text-slate-400">{item.planSub}</div>
-                      </TableCell>
-                      <TableCell className="py-3 px-3">
-                        <Badge
-                          variant="secondary"
-                          className={`text-[10px] font-bold ${
-                            item.status === "Active"
-                              ? "bg-teal-100 text-teal-800 hover:bg-teal-100 border-none"
-                              : item.status === "New"
-                              ? "bg-amber-100 text-amber-800 hover:bg-amber-100 border-none"
-                              : "bg-rose-100 text-rose-800 hover:bg-rose-100 border-none"
-                          }`}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-6 w-24 rounded-md" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-5 w-16 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-5 w-32 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="py-3.5 px-4 text-right"><Skeleton className="h-7 w-20 ml-auto rounded-lg" /></td>
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-slate-400">
+                    No students found matching your filters.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((student) => {
+                const initials = student.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2);
+
+                return (
+                  <tr key={student._id} className="hover:bg-slate-50/60 transition-colors">
+                    {/* Student Profile with Avatar */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden border border-emerald-200 shadow-2xs">
+                          {student.avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={student.avatar}
+                              alt={student.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{initials}</span>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 text-sm">
+                            {student.name}
+                          </div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                            <Mail className="w-3 h-3 text-slate-400" />
+                            <span>{student.email}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Student ID */}
+                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-800">
+                      <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/60">
+                        {student.studentId}
+                      </span>
+                    </td>
+
+                    {/* Grade */}
+                    <td className="py-3.5 px-4">
+                      <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                        {student.grade || "Grade 8"}
+                      </span>
+                    </td>
+
+                    {/* Enrolled Courses */}
+                    <td className="py-3.5 px-4">
+                      <div className="space-y-1">
+                        {student.enrolledCourses && student.enrolledCourses.length > 0 ? (
+                          student.enrolledCourses.slice(0, 2).map((c, idx) => (
+                            <div
+                              key={c._id || idx}
+                              className="text-[11px] font-medium text-slate-700 truncate max-w-xs"
+                            >
+                              • {c.title}
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">No enrollments yet</span>
+                        )}
+                        {student.enrolledCourses && student.enrolledCourses.length > 2 && (
+                          <span className="text-[10px] text-slate-400 font-bold">
+                            +{student.enrolledCourses.length - 2} more
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Contact */}
+                    <td className="py-3.5 px-4 text-slate-600 text-[11px]">
+                      <div>{student.phone || "—"}</div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setViewingStudent(student);
+                            setIsViewOpen(true);
+                          }}
+                          className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                          title="View Student"
                         >
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3 px-4 text-right">
-                        <span className="font-semibold text-teal-800 hover:underline">
-                          {item.action}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="p-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
-            <span>Showing {filteredStudents.length} of 128 active students</span>
-            <Pagination className="w-auto mx-0 justify-end">
-              <PaginationContent className="gap-1 text-xs">
-                <PaginationItem>
-                  <PaginationPrevious href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
-                </PaginationItem>
-                <PaginationItem>
-                  <span className="px-2 text-xs font-bold text-slate-700 select-none">Page 1</span>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" text="" className="h-7 w-7 p-0 justify-center text-slate-600 hover:text-slate-900 cursor-pointer" />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </div>
-
-        {/* Selected Student Profile (5 cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Student Profile · {selectedStudent?.id || "ST-1008"}
-            </span>
-            <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-100 border-none text-[10px] font-bold">
-              {selectedStudent?.status || "Active learner"}
-            </Badge>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-black text-[#0B1E2B] font-display">
-              {selectedStudent?.name || "Emma Thant"}
-            </h3>
-          </div>
-
-          {/* Details list */}
-          <div className="space-y-3 text-xs">
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Learning plan
-              </div>
-              <div className="text-slate-800 font-medium">
-                {selectedStudent?.plan || "Grade 8 · Algebra I · Lin Chen · One-to-one"}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Linked guardian
-              </div>
-              <div className="text-slate-800 font-medium">
-                {selectedStudent?.guardian ||
-                  "May Thant · Parent & billing contact · Verified"}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Sibling account
-              </div>
-              <div className="text-slate-800 font-medium">
-                {selectedStudent?.sibling ||
-                  "Noah Thant · Grade 5 · Science explorers"}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Family preferences
-              </div>
-              <div className="text-slate-800 font-medium">
-                {selectedStudent?.prefs ||
-                  "English · Burmese support on request · America/New_York (UTC-5 today)"}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Next lesson
-              </div>
-              <div className="text-slate-800 font-medium">
-                {selectedStudent?.nextLesson ||
-                  "Today · 5:00–6:00 PM ET · Linear equations"}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                November learning plan
-              </div>
-              <div className="text-slate-800 font-medium">
-                {selectedStudent?.billing ||
-                  "2 of 8 lessons completed · $240 monthly · Paid Nov 1"}
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="space-y-2 pt-2">
-            <button
-              type="button"
-              className="w-full py-2.5 bg-[#0A5C4C] hover:bg-[#08483B] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
-            >
-              Open family record
-            </button>
-            <button
-              type="button"
-              className="w-full py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
-            >
-              Message May
-            </button>
-          </div>
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingStudent(student);
+                            setIsEditOpen(true);
+                          }}
+                          className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-700 transition-colors cursor-pointer"
+                          title="Edit Student"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeletingStudent(student);
+                            setIsDeleteOpen(true);
+                          }}
+                          className="p-1.5 hover:bg-rose-50 rounded-lg text-rose-600 transition-colors cursor-pointer"
+                          title="Delete Student"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }))}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Bottom Grid: Onboarding attention & Guardian privacy */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Onboarding needs attention */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#0B1E2B]">Onboarding needs attention</h3>
-            <button className="text-xs font-semibold text-teal-700 hover:underline flex items-center gap-1 cursor-pointer">
-              <span>Review all 4</span>
-              <ExternalLink className="w-3 h-3" />
+      {/* --- CREATE STUDENT MODAL --- */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95">
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 rounded-full cursor-pointer"
+            >
+              <X className="w-5 h-5" />
             </button>
-          </div>
 
-          <div className="space-y-3 pt-1">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-[#0B1E2B]">
-                  Ava Johnson · Guardian consent pending
-                </span>
-                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none text-[10px] font-bold">
-                  Required
-                </Badge>
-              </div>
-              <div className="text-[11px] text-slate-500">
-                Invite sent Nov 3 · Do not schedule lessons before consent is recorded.
-              </div>
-              <button className="text-xs font-bold text-teal-700 hover:underline inline-flex items-center gap-1 mt-1 cursor-pointer">
-                <span>Resend guardian invitation</span>
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
-
-            <Alert className="p-3 bg-amber-50/80 border border-amber-200/70 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
-              <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <AlertDescription className="text-xs text-amber-900 leading-snug">
-                Timezone is required before a first lesson can be confirmed.
-              </AlertDescription>
-            </Alert>
-          </div>
-        </div>
-
-        {/* Guardian access & privacy */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#0B1E2B]">Guardian access & privacy</h3>
-            <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-100 border-none text-[10px] font-bold">
-              Verified
-            </Badge>
-          </div>
-
-          <div className="space-y-3 pt-1">
-            <div className="font-bold text-xs text-[#0B1E2B]">
-              Thant family · Access verified
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              May can see Emma and Noah&apos;s lessons, progress and billing. Student accounts cannot view payment details.
-            </p>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
-              <div className="font-bold text-slate-700">Only invite an authorized guardian</div>
-              <p className="text-[11px] text-slate-500">
-                Linking another guardian requires family confirmation and is recorded in activity history.
+            <div className="mb-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A5C4C] font-mono">
+                Student Account Provisioning
+              </span>
+              <h2 className="text-xl font-black text-[#0B1E2B] font-display mt-0.5">
+                Register New Student
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Upload student profile photo (stored in local /uploads folder), specify grade, and generate their permanent Student ID.
               </p>
             </div>
-            <button className="text-xs font-bold text-teal-700 hover:underline flex items-center gap-1 cursor-pointer">
-              <span>Manage guardian links</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              {/* Image Upload Component */}
+              <ImageUploadField
+                label="Student Profile Photo"
+                value={createForm.avatar}
+                onChange={(url) => setCreateForm({ ...createForm, avatar: url })}
+                folder="students"
+                aspectRatio="circle"
+                helperText="Upload student headshot. Stored locally in /uploads/students."
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                    placeholder="e.g. Maya Lin"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Email Address <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    placeholder="e.g. maya.lin@student.edu"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Grade Level
+                  </label>
+                  <select
+                    value={createForm.grade}
+                    onChange={(e) => setCreateForm({ ...createForm, grade: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C] cursor-pointer"
+                  >
+                    {AVAILABLE_GRADES.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    placeholder="+95 9 123456789"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Default Temporary Password
+                </label>
+                <input
+                  type="text"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  The student can change their password on first sign-in.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#0A5C4C] hover:bg-[#08483B] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Create Student Account
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* --- EDIT STUDENT MODAL --- */}
+      {isEditOpen && editingStudent && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95">
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 rounded-full cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mb-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A5C4C] font-mono">
+                Update Student
+              </span>
+              <h2 className="text-xl font-black text-[#0B1E2B] font-display mt-0.5">
+                Edit {editingStudent.name}
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Student ID: <span className="font-mono font-bold text-emerald-800">{editingStudent.studentId}</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              {/* Image Upload Component */}
+              <ImageUploadField
+                label="Student Profile Photo"
+                value={editingStudent.avatar || ""}
+                onChange={(url) => setEditingStudent({ ...editingStudent, avatar: url })}
+                folder="students"
+                aspectRatio="circle"
+                helperText="Stored locally in /uploads/students."
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingStudent.name}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editingStudent.email}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, email: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Grade Level
+                  </label>
+                  <select
+                    value={editingStudent.grade || "Grade 8"}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, grade: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C] cursor-pointer"
+                  >
+                    {AVAILABLE_GRADES.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={editingStudent.phone || ""}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, phone: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0A5C4C]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#0A5C4C] hover:bg-[#08483B] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- VIEW STUDENT MODAL --- */}
+      {isViewOpen && viewingStudent && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95">
+            <button
+              type="button"
+              onClick={() => setIsViewOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 rounded-full cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center text-center pb-4 border-b border-slate-100">
+              <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xl flex items-center justify-center overflow-hidden border-2 border-emerald-300 shadow-xs mb-3">
+                {viewingStudent.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={viewingStudent.avatar} alt={viewingStudent.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{viewingStudent.name.slice(0, 2).toUpperCase()}</span>
+                )}
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">{viewingStudent.name}</h3>
+              <p className="text-xs text-slate-500">{viewingStudent.email}</p>
+              <div className="mt-2 inline-flex items-center gap-2">
+                <span className="font-mono font-bold text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                  {viewingStudent.studentId}
+                </span>
+                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
+                  {viewingStudent.grade || "Grade 8"}
+                </span>
+              </div>
+            </div>
+
+            <div className="py-4 space-y-3 text-xs">
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="font-semibold text-slate-500">Phone:</span>
+                <span>{viewingStudent.phone || "Not specified"}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="font-semibold text-slate-500">Registered Date:</span>
+                <span>{new Date(viewingStudent.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="pt-2">
+                <span className="font-bold text-slate-700 block mb-2">Enrolled Courses:</span>
+                {viewingStudent.enrolledCourses && viewingStudent.enrolledCourses.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {viewingStudent.enrolledCourses.map((c, i) => (
+                      <div key={i} className="p-2 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
+                        <BookOpen className="w-3.5 h-3.5 text-[#0A5C4C]" />
+                        <span className="font-medium text-slate-800 truncate">{c.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-slate-400 italic">No courses currently enrolled.</span>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsViewOpen(false)}
+                className="px-5 py-2 bg-[#0A5C4C] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- DELETE CONFIRMATION MODAL --- */}
+      {isDeleteOpen && deletingStudent && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 border border-slate-200 shadow-2xl text-center animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">Delete Student Account</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Are you sure you want to remove <strong className="text-slate-800">{deletingStudent.name}</strong> ({deletingStudent.studentId})? This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setIsDeleteOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                Delete Student
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

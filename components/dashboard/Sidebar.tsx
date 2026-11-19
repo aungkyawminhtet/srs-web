@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { setStoredAuth } from "@/lib/api/client";
 import {
   BookOpen,
   LayoutDashboard,
@@ -58,12 +60,6 @@ export function Sidebar({ mobileOpen = false, setMobileOpen }: SidebarProps) {
       href: "/dashboard/assignments",
       icon: FileCheck2,
       active: pathname.startsWith("/dashboard/assignments"),
-    },
-    {
-      name: "Progress",
-      href: "/dashboard/progress",
-      icon: TrendingUp,
-      active: pathname === "/dashboard/progress",
     },
     {
       name: "Messages",
@@ -134,7 +130,7 @@ export function Sidebar({ mobileOpen = false, setMobileOpen }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14.5px] font-semibold transition-all ${
                   item.active
                     ? "bg-[#EAF5F2] text-[#0A5C4C]"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -142,7 +138,7 @@ export function Sidebar({ mobileOpen = false, setMobileOpen }: SidebarProps) {
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-4 h-4 ${
+                    className={`w-4.5 h-4.5 ${
                       item.active ? "text-[#0A5C4C]" : "text-slate-400"
                     }`}
                   />
@@ -162,37 +158,37 @@ export function Sidebar({ mobileOpen = false, setMobileOpen }: SidebarProps) {
       {/* Middle & Bottom section */}
       <div className="p-5 lg:p-6 pt-2 space-y-4">
         {/* Help yellow card */}
-        <div className="bg-[#FAF7EC] border border-[#ECE5CD] rounded-2xl p-4 space-y-1.5">
-          <div className="text-xs font-bold text-amber-950 font-display">
+        <div className="bg-[#FAF7EC] border border-[#ECE5CD] rounded-2xl p-4.5 space-y-2">
+          <div className="text-sm font-bold text-amber-950 font-display">
             A little help goes a long way
           </div>
-          <p className="text-[11px] text-amber-900/80 leading-relaxed font-sans">
+          <p className="text-xs text-amber-900/90 leading-relaxed font-sans">
             Questions about lessons or getting connected? We can help.
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A5C4C] hover:underline pt-0.5"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A5C4C] hover:underline pt-0.5"
           >
             <span>Contact support</span>
-            <ExternalLink className="w-3 h-3" />
+            <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* Secondary quick links */}
-        <div className="space-y-1 px-1">
+        <div className="space-y-1.5 px-1">
           <Link
             href="/dashboard/settings"
-            className="flex items-center justify-between text-xs font-medium text-slate-500 hover:text-[#0A5C4C] py-1 transition-colors"
+            className="flex items-center justify-between text-xs sm:text-[13px] font-medium text-slate-500 hover:text-[#0A5C4C] py-1 transition-colors"
           >
             <span>Family profile &amp; settings</span>
-            <ExternalLink className="w-3 h-3 text-slate-400" />
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
           </Link>
           <Link
             href="/dashboard/help"
-            className="flex items-center justify-between text-xs font-medium text-slate-500 hover:text-[#0A5C4C] py-1 transition-colors"
+            className="flex items-center justify-between text-xs sm:text-[13px] font-medium text-slate-500 hover:text-[#0A5C4C] py-1 transition-colors"
           >
             <span>Help &amp; support</span>
-            <ExternalLink className="w-3 h-3 text-slate-400" />
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
           </Link>
           <Link
             href="/"
@@ -270,14 +266,19 @@ export function Sidebar({ mobileOpen = false, setMobileOpen }: SidebarProps) {
                   <Settings className="w-3.5 h-3.5 text-slate-400" />
                   <span>Account settings</span>
                 </Link>
-                <Link
-                  href="/"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50"
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setProfileDropdownOpen(false);
+                    document.cookie = "srs_user_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                    setStoredAuth(null);
+                    await signOut({ callbackUrl: "/login" });
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 text-left cursor-pointer transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5 text-rose-500" />
                   <span>Sign out</span>
-                </Link>
+                </button>
               </div>
             </div>
           )}

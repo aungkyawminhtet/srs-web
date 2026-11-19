@@ -4,12 +4,10 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, BookOpen, ArrowUpRight } from "lucide-react";
-import { useAuthModal } from "@/components/auth/AuthModalContext";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { openAuthModal } = useAuthModal();
 
   const isActive = (path: string) => pathname === path;
 
@@ -22,7 +20,6 @@ export function Navbar() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          
           {/* Brand Logo: fun & learn */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-xl bg-[#0A5C4C] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
@@ -35,38 +32,38 @@ export function Navbar() {
 
           {/* Desktop Nav Links */}
           <nav className="hidden lg:flex items-center gap-7 xl:gap-8 text-[15px] font-medium text-[#334155]">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className={`hover:text-[#0A5C4C] transition-colors ${isActive("/") ? "text-[#0A5C4C] font-bold" : ""}`}
             >
               Home
             </Link>
-            <Link 
-              href="/programs" 
+            <Link
+              href="/programs"
               className={`hover:text-[#0A5C4C] transition-colors ${isActive("/programs") ? "text-[#0A5C4C] font-bold" : ""}`}
             >
               Programs
             </Link>
-            <Link 
-              href="/subjects" 
+            <Link
+              href="/subjects"
               className={`hover:text-[#0A5C4C] transition-colors ${isActive("/subjects") ? "text-[#0A5C4C] font-bold" : ""}`}
             >
               Subjects
             </Link>
-            <Link 
-              href="/tutors" 
+            <Link
+              href="/tutors"
               className={`hover:text-[#0A5C4C] transition-colors ${isActive("/tutors") ? "text-[#0A5C4C] font-bold" : ""}`}
             >
               Our tutors
             </Link>
-            <Link 
-              href="/resources" 
+            <Link
+              href="/resources"
               className={`hover:text-[#0A5C4C] transition-colors ${isActive("/resources") ? "text-[#0A5C4C] font-bold" : ""}`}
             >
               Family resources
             </Link>
-            <Link 
-              href="/how-it-works" 
+            <Link
+              href="/how-it-works"
               className={`hover:text-[#0A5C4C] transition-colors ${isActive("/how-it-works") ? "text-[#0A5C4C] font-bold" : ""}`}
             >
               How it works
@@ -75,13 +72,12 @@ export function Navbar() {
 
           {/* Right Action Buttons */}
           <div className="hidden lg:flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => openAuthModal("login")}
+            <Link
+              href="/login"
               className="text-[14px] font-semibold text-slate-700 hover:text-[#0A5C4C] px-3 py-2 transition-colors cursor-pointer"
             >
               Log in
-            </button>
+            </Link>
             <Link
               href="/consultation"
               className="inline-flex items-center gap-1.5 bg-[#0A5C4C] hover:bg-[#08483b] text-white text-[14px] font-bold px-5 py-2.5 rounded-full shadow-xs hover:shadow transition-all group"
@@ -99,7 +95,11 @@ export function Navbar() {
               className="p-2 rounded-lg text-slate-700 hover:text-[#0A5C4C] hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -153,16 +153,13 @@ export function Navbar() {
             </Link>
           </nav>
           <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                openAuthModal("login");
-              }}
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center py-2.5 font-semibold text-slate-700 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
             >
               Log in
-            </button>
+            </Link>
             <Link
               href="/consultation"
               onClick={() => setMobileMenuOpen(false)}
